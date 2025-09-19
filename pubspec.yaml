@@ -55,6 +55,25 @@ dependencies:
   shimmer: ^3.0.0
   cached_network_image: ^3.3.1
 
+  # Database and storage
+  sqflite: ^2.3.0
+  path_provider: ^2.1.1
+
+  # Image handling
+  image_picker: ^1.0.4
+
+  # Charts and analytics
+  fl_chart: ^0.66.0
+
+  # Date and time
+  intl: ^0.19.0
+
+  # UUID generation
+  uuid: ^4.2.1
+
+  # File handling
+  path: ^1.8.3
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

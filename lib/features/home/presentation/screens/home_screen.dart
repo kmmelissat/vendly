@@ -3,6 +3,8 @@ import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:animate_do/animate_do.dart';
 import '../../../../core/constants/app_constants.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/services/database_service.dart';
+import '../../../../shared/models/product_model.dart';
 import '../../../../shared/widgets/custom_app_bar.dart';
 import '../../../../shared/widgets/product_card.dart';
 import '../widgets/category_chip.dart';
@@ -18,60 +20,56 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final ScrollController _scrollController = ScrollController();
+  final DatabaseService _databaseService = DatabaseService();
+
   String _selectedCategory = 'All';
+  List<Product> _products = [];
+  bool _isLoading = true;
 
   final List<String> _categories = [
     'All',
     'Electronics',
     'Fashion',
-    'Home',
-    'Beauty',
-    'Sports',
+    'Home & Garden',
+    'Beauty & Health',
+    'Sports & Outdoors',
+    'Books & Media',
+    'Toys & Games',
+    'Food & Beverages',
+    'Automotive',
+    'Other',
   ];
 
-  final List<Map<String, dynamic>> _featuredProducts = [
-    {
-      'imageUrl':
-          'https://via.placeholder.com/300x300/3B82F6/FFFFFF?text=Product+1',
-      'title': 'Wireless Bluetooth Headphones',
-      'price': '\$89.99',
-      'originalPrice': '\$129.99',
-      'rating': 4.5,
-      'badge': 'Sale',
-      'badgeColor': Colors.red,
-    },
-    {
-      'imageUrl':
-          'https://via.placeholder.com/300x300/60A5FA/FFFFFF?text=Product+2',
-      'title': 'Smart Fitness Watch',
-      'price': '\$199.99',
-      'rating': 4.8,
-      'badge': 'New',
-      'badgeColor': AppTheme.accentBlue,
-    },
-    {
-      'imageUrl':
-          'https://via.placeholder.com/300x300/1E3A8A/FFFFFF?text=Product+3',
-      'title': 'Premium Coffee Maker',
-      'price': '\$149.99',
-      'originalPrice': '\$199.99',
-      'rating': 4.3,
-    },
-    {
-      'imageUrl':
-          'https://via.placeholder.com/300x300/DBEAFE/1E3A8A?text=Product+4',
-      'title': 'Organic Skincare Set',
-      'price': '\$79.99',
-      'rating': 4.7,
-      'badge': 'Popular',
-      'badgeColor': AppTheme.lightBlue,
-    },
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _loadProducts();
+  }
 
   @override
   void dispose() {
     _scrollController.dispose();
     super.dispose();
+  }
+
+  Future<void> _loadProducts() async {
+    try {
+      final products = await _databaseService.getAllProducts(
+        category: _selectedCategory == 'All' ? null : _selectedCategory,
+      );
+      if (mounted) {
+        setState(() {
+          _products = products;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
   }
 
   @override
@@ -160,30 +158,70 @@ class _HomeScreenState extends State<HomeScreen> {
               padding: const EdgeInsets.symmetric(
                 horizontal: AppConstants.spacingMd,
               ),
-              sliver: SliverMasonryGrid.count(
-                crossAxisCount: 2,
-                mainAxisSpacing: AppConstants.spacingMd,
-                crossAxisSpacing: AppConstants.spacingMd,
-                childCount: _featuredProducts.length,
-                itemBuilder: (context, index) {
-                  final product = _featuredProducts[index];
-                  return FadeInUp(
-                    duration: AppConstants.animationMedium,
-                    delay: Duration(milliseconds: 400 + (index * 100)),
-                    child: ProductCard(
-                      imageUrl: product['imageUrl'],
-                      title: product['title'],
-                      price: product['price'],
-                      originalPrice: product['originalPrice'],
-                      rating: product['rating'],
-                      badge: product['badge'],
-                      badgeColor: product['badgeColor'],
-                      onTap: () => _onProductTap(product),
-                      onFavoritePressed: () => _onFavoritePressed(index),
+              sliver: _isLoading
+                  ? const SliverToBoxAdapter(
+                      child: Center(
+                        child: Padding(
+                          padding: EdgeInsets.all(AppConstants.spacingXl),
+                          child: CircularProgressIndicator(),
+                        ),
+                      ),
+                    )
+                  : _products.isEmpty
+                  ? SliverToBoxAdapter(
+                      child: Center(
+                        child: Padding(
+                          padding: const EdgeInsets.all(AppConstants.spacingXl),
+                          child: Column(
+                            children: [
+                              Icon(
+                                Icons.inventory_2_outlined,
+                                size: 64,
+                                color: AppTheme.textSecondary,
+                              ),
+                              const SizedBox(height: AppConstants.spacingMd),
+                              Text(
+                                'No products found',
+                                style: Theme.of(context).textTheme.titleLarge
+                                    ?.copyWith(color: AppTheme.textSecondary),
+                              ),
+                              const SizedBox(height: AppConstants.spacingSm),
+                              Text(
+                                'Try selecting a different category',
+                                style: Theme.of(context).textTheme.bodyMedium
+                                    ?.copyWith(color: AppTheme.textSecondary),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    )
+                  : SliverMasonryGrid.count(
+                      crossAxisCount: 2,
+                      mainAxisSpacing: AppConstants.spacingMd,
+                      crossAxisSpacing: AppConstants.spacingMd,
+                      childCount: _products.length,
+                      itemBuilder: (context, index) {
+                        final product = _products[index];
+                        return FadeInUp(
+                          duration: AppConstants.animationMedium,
+                          delay: Duration(milliseconds: 400 + (index * 100)),
+                          child: ProductCard(
+                            imageUrl: product.primaryImageUrl,
+                            title: product.name,
+                            price: '\$${product.price.toStringAsFixed(2)}',
+                            originalPrice: product.originalPrice != null
+                                ? '\$${product.originalPrice!.toStringAsFixed(2)}'
+                                : null,
+                            rating: product.rating,
+                            badge: product.isOnSale ? 'Sale' : null,
+                            badgeColor: product.isOnSale ? Colors.red : null,
+                            onTap: () => _onProductTap(product),
+                            onFavoritePressed: () => _onFavoritePressed(index),
+                          ),
+                        );
+                      },
                     ),
-                  );
-                },
-              ),
             ),
 
             // Bottom Spacing
@@ -222,26 +260,22 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _onRefresh() async {
-    // Simulate network request
-    await Future.delayed(const Duration(seconds: 1));
-    if (mounted) {
-      setState(() {
-        // Refresh data
-      });
-    }
+    await _loadProducts();
   }
 
   void _onCategorySelected(String category) {
     setState(() {
       _selectedCategory = category;
+      _isLoading = true;
     });
+    _loadProducts();
   }
 
-  void _onProductTap(Map<String, dynamic> product) {
+  void _onProductTap(Product product) {
     // Navigate to product details
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('Tapped on ${product['title']}'),
+        content: Text('Tapped on ${product.name}'),
         backgroundColor: AppTheme.primaryBlue,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(
@@ -253,17 +287,17 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _onFavoritePressed(int index) {
     // Toggle favorite status
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          'Added ${_featuredProducts[index]['title']} to favorites',
+    if (index < _products.length) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Added ${_products[index].name} to favorites'),
+          backgroundColor: AppTheme.accentBlue,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppConstants.radiusMd),
+          ),
         ),
-        backgroundColor: AppTheme.accentBlue,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppConstants.radiusMd),
-        ),
-      ),
-    );
+      );
+    }
   }
 }

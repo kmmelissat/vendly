@@ -6,11 +6,13 @@ import '../../core/theme/app_theme.dart';
 class CustomBottomNav extends StatelessWidget {
   final int currentIndex;
   final ValueChanged<int> onTap;
+  final bool isSeller;
 
   const CustomBottomNav({
     super.key,
     required this.currentIndex,
     required this.onTap,
+    this.isSeller = false,
   });
 
   @override
@@ -64,9 +66,11 @@ class CustomBottomNav extends StatelessWidget {
                 ),
                 _buildNavItem(
                   context,
-                  icon: Icons.favorite_outline,
-                  activeIcon: Icons.favorite,
-                  label: 'Favorites',
+                  icon: isSeller
+                      ? Icons.dashboard_outlined
+                      : Icons.favorite_outline,
+                  activeIcon: isSeller ? Icons.dashboard : Icons.favorite,
+                  label: isSeller ? 'Dashboard' : 'Favorites',
                   index: 2,
                 ),
                 _buildNavItem(

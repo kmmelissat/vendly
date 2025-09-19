@@ -19,6 +19,14 @@ class AppTheme {
   static const Color textPrimary = Color(0xFF1F2937);
   static const Color textSecondary = Color(0xFF6B7280);
   static const Color textLight = Color(0xFF9CA3AF);
+  static const Color borderColor = Color(0xFFE5E7EB);
+
+  // Gradients
+  static const LinearGradient primaryGradient = LinearGradient(
+    colors: [primaryBlue, lightBlue],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
 
   static ThemeData get lightTheme {
     return ThemeData(
@@ -29,7 +37,6 @@ class AppTheme {
         primary: primaryBlue,
         secondary: lightBlue,
         surface: surfaceColor,
-        background: backgroundColor,
       ),
       textTheme: GoogleFonts.interTextTheme().copyWith(
         displayLarge: GoogleFonts.inter(
