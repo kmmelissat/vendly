@@ -34,7 +34,11 @@ class CustomBottomNav extends StatelessWidget {
         child: BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
           child: Container(
-            height: 80,
+            // Add proper padding for iPhone safe area
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(context).padding.bottom + 8,
+              top: 8,
+            ),
             decoration: BoxDecoration(
               color: Colors.white.withOpacity(0.9),
               borderRadius: const BorderRadius.vertical(

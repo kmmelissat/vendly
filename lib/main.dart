@@ -26,8 +26,12 @@ void main() async {
     ),
   );
 
-  // Initialize auth service
-  await AuthService().initializeAuth();
+  // Initialize auth service (simplified for faster startup)
+  try {
+    await AuthService().initializeAuth();
+  } catch (e) {
+    print('Auth initialization error: $e');
+  }
 
   runApp(const LinkUpApp());
 }
@@ -41,23 +45,7 @@ class LinkUpApp extends StatelessWidget {
       title: AppConstants.appName,
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
-      home: StreamBuilder<User?>(
-        stream: AuthService().userStream,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Scaffold(
-              backgroundColor: AppTheme.backgroundColor,
-              body: Center(child: CircularProgressIndicator()),
-            );
-          }
-
-          if (snapshot.hasData) {
-            return const MainScreen();
-          }
-
-          return const LoginScreen();
-        },
-      ),
+      home: const LoginScreen(), // Start directly with login screen
       routes: {
         '/main': (context) => const MainScreen(),
         '/login': (context) => const LoginScreen(),
@@ -110,7 +98,6 @@ class _MainScreenState extends State<MainScreen> {
         onTap: _onTabTapped,
         isSeller: isSeller,
       ),
-      extendBody: true,
     );
   }
 
