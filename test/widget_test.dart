@@ -7,15 +7,14 @@
 
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:link_up/main.dart';
+import 'package:vendly/main.dart';
 
 void main() {
-  testWidgets('LinkUp app smoke test', (WidgetTester tester) async {
+  testWidgets('Vendly app smoke test', (WidgetTester tester) async {
     // Build our app and trigger a frame.
-    await tester.pumpWidget(const LinkUpApp());
+    await tester.pumpWidget(const VendlyApp());
 
-    // Verify that the login screen is displayed
-    expect(find.text('LinkUp'), findsOneWidget);
-    expect(find.text('Connect. Shop. Discover.'), findsOneWidget);
+    // Verify that the home screen is displayed
+    expect(find.text('Vendly'), findsOneWidget);
   });
 }
