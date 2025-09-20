@@ -61,7 +61,7 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: SvgPicture.asset('assets/images/vendly..svg', height: 50),
+        title: SvgPicture.asset('assets/images/vendly.svg', height: 50),
       ),
       body: _pages[_selectedIndex],
       bottomNavigationBar: BottomNavigationBar(
