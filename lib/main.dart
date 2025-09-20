@@ -1,17 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'core/theme/app_theme.dart';
-import 'core/constants/app_constants.dart';
-import 'core/services/auth_service.dart';
-import 'features/auth/presentation/screens/login_screen.dart';
-import 'features/home/presentation/screens/home_screen.dart';
-import 'features/products/presentation/screens/search_screen.dart';
-import 'features/products/presentation/screens/favorites_screen.dart';
-import 'features/products/presentation/screens/cart_screen.dart';
-import 'features/profile/presentation/screens/profile_screen.dart';
-import 'features/seller/presentation/screens/seller_dashboard_screen.dart';
-import 'shared/models/user_model.dart';
-import 'shared/widgets/custom_bottom_nav.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -26,13 +14,6 @@ void main() async {
     ),
   );
 
-  // Initialize auth service (simplified for faster startup)
-  try {
-    await AuthService().initializeAuth();
-  } catch (e) {
-    print('Auth initialization error: $e');
-  }
-
   runApp(const LinkUpApp());
 }
 
@@ -42,68 +23,9 @@ class LinkUpApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: AppConstants.appName,
+      title: 'LinkUp',
       debugShowCheckedModeBanner: false,
-      theme: AppTheme.lightTheme,
-      home: const LoginScreen(), // Start directly with login screen
-      routes: {
-        '/main': (context) => const MainScreen(),
-        '/login': (context) => const LoginScreen(),
-      },
+      theme: ThemeData.light(),
     );
-  }
-}
-
-class MainScreen extends StatefulWidget {
-  const MainScreen({super.key});
-
-  @override
-  State<MainScreen> createState() => _MainScreenState();
-}
-
-class _MainScreenState extends State<MainScreen> {
-  int _currentIndex = 0;
-  final AuthService _authService = AuthService();
-
-  List<Widget> get _screens {
-    final user = _authService.currentUser;
-    if (user?.role == UserRole.seller) {
-      return const [
-        HomeScreen(),
-        SearchScreen(),
-        SellerDashboardScreen(),
-        CartScreen(),
-        ProfileScreen(),
-      ];
-    } else {
-      return const [
-        HomeScreen(),
-        SearchScreen(),
-        FavoritesScreen(),
-        CartScreen(),
-        ProfileScreen(),
-      ];
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final user = _authService.currentUser;
-    final isSeller = user?.role == UserRole.seller;
-
-    return Scaffold(
-      body: IndexedStack(index: _currentIndex, children: _screens),
-      bottomNavigationBar: CustomBottomNav(
-        currentIndex: _currentIndex,
-        onTap: _onTabTapped,
-        isSeller: isSeller,
-      ),
-    );
-  }
-
-  void _onTabTapped(int index) {
-    setState(() {
-      _currentIndex = index;
-    });
   }
 }
