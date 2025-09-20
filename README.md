@@ -1,51 +1,73 @@
-# LinkUp - Marketplace Mobile Application
+# Vendly - Local E-commerce Platform for El Salvador
 
-LinkUp is a comprehensive marketplace mobile application built with Flutter that allows entrepreneurs to create their own mini-shops and sell products while providing buyers with a seamless shopping experience.
+Vendly is a comprehensive e-commerce platform built with Flutter, designed specifically for Salvadoran entrepreneurs. It functions as a "local Shopify" that enables small and medium-sized businesses to create their digital stores in minutes, integrating local payment methods and national logistics for a complete ecosystem.
 
-## Features
+## Core Value Proposition
 
-### For Sellers (Entrepreneurs)
+**Main Idea**: Vendly is a local Shopify alternative designed for Salvadoran entrepreneurs to digitize their businesses quickly and efficiently. The platform integrates local payment methods and national logistics, offering an all-in-one ecosystem that eliminates the need to manage multiple service providers.
 
-- **Store Creation**: Set up your own mini-shop with custom branding
-- **Product Management**: Add, edit, and manage products with images
-- **Inventory Tracking**: Monitor stock levels and product status
-- **Order Management**: View and manage incoming orders
-- **Analytics Dashboard**: Track sales, revenue, and customer data
-- **Category Management**: Organize products by categories
+**Purpose**: Enable local vendors to easily digitize their businesses, allowing them to sell online with security and speed, while customers can purchase from anywhere in the country using reliable payment methods and delivery services.
 
-### For Buyers
+## Key Features
 
-- **Product Discovery**: Browse products from multiple stores
-- **Search & Filter**: Find products by name, category, or keywords
-- **Category Browsing**: Explore products by different categories
-- **Favorites**: Save products for later viewing
-- **Shopping Cart**: Add products and manage orders
+### 🏪 For Sellers (Local Entrepreneurs)
 
-### Authentication System
+- **Quick Store Setup**: Create your digital store in minutes with custom branding
+- **Product Management**: Add, edit, and manage products with image support
+- **Inventory Control**: Real-time stock monitoring and product status tracking
+- **Order Processing**: Streamlined order management and fulfillment
+- **Sales Analytics**: Track revenue, sales trends, and customer insights
+- **Multi-channel Sharing**: Share product links directly on WhatsApp, Instagram, and Facebook
 
-- **Dual Role Support**: Separate flows for buyers and sellers
-- **User Profiles**: Manage personal information and preferences
-- **Secure Login**: Email-based authentication system
+### 🛒 For Buyers
+
+- **Marketplace Discovery**: Browse products from multiple local stores
+- **Advanced Search**: Find products by name, category, price, or location
+- **Secure Shopping**: Safe and reliable purchasing experience
+- **Multiple Payment Options**: Choose from various local payment methods
+- **Order Tracking**: Real-time delivery status updates
+- **Favorites & Wishlist**: Save products for future purchases
+
+### 💳 Local Payment Integration
+
+- **Wompi**: Digital wallet payments
+- **n1co**: Mobile payment solutions
+- **Bank Transfers**: Direct bank-to-bank transfers
+- **Cash on Delivery**: Pay when you receive your order
+- **Credit/Debit Cards**: Secure card processing
+
+### 📦 National Logistics Network
+
+- **Boxful**: Nationwide delivery service
+- **PedidosYa**: Food and product delivery
+- **Express**: Fast courier services
+- **Forza**: Reliable shipping solutions
+- **Automatic Integration**: Seamless connection with delivery partners
+
+## Why Vendly Over Global Solutions?
+
+While platforms like Shopify work globally, they're not adapted to Salvadoran reality. Vendly understands local needs:
+
+- **Local Payment Methods**: Integration with payment systems that actually work in El Salvador
+- **National Delivery Network**: Connection with local courier services that deliver nationwide
+- **Affordable Pricing**: Competitive rates designed for the Salvadoran market
+- **Spanish Support**: Complete platform and customer service in Spanish
+- **Local Business Understanding**: Features designed for how Salvadoran businesses operate
 
 ## Technical Architecture
 
-### Database
+### 📱 Flutter Framework
 
-- **SQLite**: Local database for data persistence
-- **Models**: User, Store, Product, Order, and Analytics models
-- **Services**: Database service for CRUD operations
+- **Cross-platform**: Single codebase for iOS and Android
+- **Modern UI**: Material Design 3 with custom Salvadoran-inspired themes
+- **Performance**: Optimized for smooth user experience
 
-### State Management
+### 🎨 UI/UX Design
 
-- **Provider Pattern**: Used for state management across the app
-- **Stream-based Auth**: Real-time authentication state updates
-
-### UI/UX
-
-- **Glass Morphism**: Modern glass effect design elements
-- **Animations**: Smooth transitions and micro-interactions
-- **Responsive Design**: Optimized for different screen sizes
-- **Material Design 3**: Following latest design guidelines
+- **Glassmorphism**: Modern glass effect design elements
+- **Smooth Animations**: Micro-interactions and transitions
+- **Responsive Layout**: Optimized for all screen sizes
+- **Accessibility**: Designed for users of all technical levels
 
 ## Getting Started
 
@@ -62,7 +84,7 @@ LinkUp is a comprehensive marketplace mobile application built with Flutter that
 
    ```bash
    git clone <repository-url>
-   cd link_up
+   cd vendly
    ```
 
 2. **Install dependencies**
@@ -76,127 +98,40 @@ LinkUp is a comprehensive marketplace mobile application built with Flutter that
    flutter run
    ```
 
-### Sample Data
-
-The app includes a sample data generator for testing purposes:
-
-1. Launch the app
-2. On the login screen, tap the "Add Sample Data" button
-3. Use these test accounts:
-   - **Seller**: `seller@example.com`
-   - **Buyer**: `buyer@example.com`
-
-## Project Structure
-
-```
-lib/
-├── core/
-│   ├── constants/          # App constants and configurations
-│   ├── services/           # Database and authentication services
-│   ├── theme/             # App theme and styling
-│   └── utils/             # Utility functions and helpers
-├── features/
-│   ├── auth/              # Authentication screens and logic
-│   ├── home/              # Home screen and components
-│   ├── products/          # Product browsing and search
-│   ├── profile/           # User profile management
-│   └── seller/            # Seller-specific features
-└── shared/
-    ├── models/            # Data models
-    └── widgets/           # Reusable UI components
-```
-
-## Key Dependencies
-
-- **flutter**: UI framework
-- **sqflite**: Local database
-- **image_picker**: Image selection
-- **animate_do**: Animations
-- **google_fonts**: Typography
-- **provider**: State management
-- **fl_chart**: Analytics charts
-- **glassmorphism**: Glass effect UI
-
-## Features Implemented
-
-✅ **Authentication System**
-
-- User registration and login
-- Role-based access (Buyer/Seller)
-- Profile management
-
-✅ **Seller Features**
-
-- Store setup and management
-- Product CRUD operations
-- Image upload support
-- Seller dashboard
-- Product inventory management
-
-✅ **Buyer Features**
-
-- Product browsing
-- Category filtering
-- Search functionality
-- Modern UI/UX
-
-✅ **Database Integration**
-
-- SQLite local storage
-- Data models and relationships
-- CRUD operations
-
-## Upcoming Features
-
-🔄 **Order Management**
-
-- Complete order processing flow
-- Order status tracking
-- Payment integration
-
-🔄 **Analytics Dashboard**
-
-- Sales charts and metrics
-- Revenue tracking
-- Customer insights
-
-🔄 **Enhanced Features**
-
-- Product reviews and ratings
-- Push notifications
-- Advanced search filters
-- Wishlist functionality
-
-## Development
+## Development & Deployment
 
 ### Running Tests
 
 ```bash
+# Run all tests
 flutter test
+
+# Run tests with coverage
+flutter test --coverage
 ```
 
 ### Building for Production
 
 ```bash
-# Android
+# Android APK
 flutter build apk --release
+
+# Android App Bundle (recommended for Play Store)
+flutter build appbundle --release
 
 # iOS
 flutter build ios --release
 ```
 
-## Contributing
+### Local Development Setup
 
-1. Fork the repository
-2. Create a feature branch
-3. Commit your changes
-4. Push to the branch
-5. Create a Pull Request
+```bash
+# Enable developer mode
+flutter config --enable-web
 
-## License
+# Run on specific device
+flutter run -d <device-id>
 
-This project is licensed under the MIT License - see the LICENSE file for details.
-
-## Support
-
-For support and questions, please open an issue in the repository or contact the development team.
+# Hot reload during development
+flutter run --hot
+```
