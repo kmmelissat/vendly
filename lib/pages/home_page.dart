@@ -136,9 +136,12 @@ class HomePage extends StatelessWidget {
       width: 140,
       margin: const EdgeInsets.only(right: 12),
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.grey.withOpacity(0.2), width: 1),
+        border: Border.all(
+          color: Theme.of(context).dividerColor.withOpacity(0.2),
+          width: 1,
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -154,10 +157,12 @@ class HomePage extends StatelessWidget {
               errorBuilder: (context, error, stackTrace) {
                 return Container(
                   height: 80,
-                  color: AppColors.lightGrey,
-                  child: const Icon(
+                  color: Theme.of(context).colorScheme.surface,
+                  child: Icon(
                     Icons.image_not_supported,
-                    color: AppColors.grey,
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withOpacity(0.5),
                   ),
                 );
               },
@@ -315,9 +320,12 @@ class HomePage extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.lightGrey.withOpacity(0.5),
+        color: Theme.of(context).colorScheme.surface.withOpacity(0.5),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.grey.withOpacity(0.2), width: 1),
+        border: Border.all(
+          color: Theme.of(context).dividerColor.withOpacity(0.2),
+          width: 1,
+        ),
       ),
       child: Row(
         children: [

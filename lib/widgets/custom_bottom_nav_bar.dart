@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../providers/theme_provider.dart';
 
 class CustomBottomNavBar extends StatelessWidget {
   final int selectedIndex;
@@ -60,9 +62,9 @@ class CustomBottomNavBar extends StatelessWidget {
       backgroundColor: Colors.transparent,
       builder: (BuildContext context) {
         return Container(
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.surface,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -72,13 +74,14 @@ class CustomBottomNavBar extends StatelessWidget {
                 height: 4,
                 margin: const EdgeInsets.symmetric(vertical: 12),
                 decoration: BoxDecoration(
-                  color: Colors.grey[300],
+                  color: Theme.of(context).dividerColor,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
               _buildMenuItem(context, Icons.analytics, 'Analytics'),
               _buildMenuItem(context, Icons.people, 'Customers'),
               _buildMenuItem(context, Icons.campaign, 'Marketing'),
+              _buildThemeToggleItem(context),
               _buildMenuItem(context, Icons.settings, 'Settings'),
               const SizedBox(height: 20),
             ],
@@ -90,15 +93,50 @@ class CustomBottomNavBar extends StatelessWidget {
 
   Widget _buildMenuItem(BuildContext context, IconData icon, String title) {
     return ListTile(
-      leading: Icon(icon, color: const Color(0xFF2D1B69)),
+      leading: Icon(icon, color: Theme.of(context).colorScheme.primary),
       title: Text(
         title,
-        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+        style: TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.w500,
+          color: Theme.of(context).colorScheme.onSurface,
+        ),
       ),
       onTap: () {
         Navigator.pop(context);
         // Handle menu item tap
         // You can add navigation logic here based on the title
+      },
+    );
+  }
+
+  Widget _buildThemeToggleItem(BuildContext context) {
+    return Consumer<ThemeProvider>(
+      builder: (context, themeProvider, child) {
+        return ListTile(
+          leading: Icon(
+            themeProvider.isDarkMode ? Icons.light_mode : Icons.dark_mode,
+            color: Theme.of(context).colorScheme.primary,
+          ),
+          title: Text(
+            themeProvider.isDarkMode ? 'Light Theme' : 'Dark Theme',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+              color: Theme.of(context).colorScheme.onSurface,
+            ),
+          ),
+          trailing: Switch(
+            value: themeProvider.isDarkMode,
+            onChanged: (value) {
+              themeProvider.toggleTheme();
+            },
+            activeColor: Theme.of(context).colorScheme.primary,
+          ),
+          onTap: () {
+            themeProvider.toggleTheme();
+          },
+        );
       },
     );
   }
