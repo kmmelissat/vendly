@@ -49,8 +49,8 @@ class _MainPageState extends State<MainPage> {
     const HomePage(),
     const OrdersPage(),
     const ProductsPage(),
+    const Center(child: Text('Menu')), // Placeholder for menu
     const ProfilePage(),
-    const AnalyticsPage(),
   ];
 
   void _onItemTapped(int index) {
@@ -131,20 +131,6 @@ class ProfilePage extends StatelessWidget {
           const SizedBox(height: 32),
           // Add more profile content here as needed
         ],
-      ),
-    );
-  }
-}
-
-class AnalyticsPage extends StatelessWidget {
-  const AnalyticsPage({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return const Center(
-      child: Text(
-        'Analytics Page',
-        style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
       ),
     );
   }
