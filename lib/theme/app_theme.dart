@@ -58,9 +58,9 @@ class AppTheme {
       appBarTheme: AppBarTheme(
         backgroundColor: AppColors.white,
         foregroundColor: AppColors.textPrimary,
-        elevation: 1,
+        elevation: 0,
         centerTitle: true,
-        shadowColor: AppColors.grey,
+        scrolledUnderElevation: 0,
         titleTextStyle: GoogleFonts.figtree(
           color: AppColors.textPrimary,
           fontSize: 24,
@@ -70,10 +70,11 @@ class AppTheme {
 
       // Bottom Navigation Bar Theme
       bottomNavigationBarTheme: BottomNavigationBarThemeData(
+        backgroundColor: AppColors.white,
         selectedItemColor: AppColors.primary,
-        unselectedItemColor: AppColors.grey,
+        unselectedItemColor: AppColors.primary.withOpacity(0.6),
         type: BottomNavigationBarType.fixed,
-        elevation: 8,
+        elevation: 0,
         selectedLabelStyle: GoogleFonts.figtree(
           fontWeight: FontWeight.w600,
           fontSize: 12,
@@ -272,9 +273,9 @@ class AppTheme {
       appBarTheme: AppBarTheme(
         backgroundColor: AppColors.darkSurface,
         foregroundColor: AppColors.darkTextPrimary,
-        elevation: 1,
+        elevation: 0,
         centerTitle: true,
-        shadowColor: AppColors.grey,
+        scrolledUnderElevation: 0,
         titleTextStyle: GoogleFonts.figtree(
           color: AppColors.darkTextPrimary,
           fontSize: 24,

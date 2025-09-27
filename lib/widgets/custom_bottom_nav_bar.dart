@@ -14,11 +14,21 @@ class CustomBottomNavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+
     return BottomNavigationBar(
       type: BottomNavigationBarType.fixed,
-      backgroundColor: const Color(0xFF2D1B69), // Dark purple background
-      selectedItemColor: Colors.white,
-      unselectedItemColor: Colors.white.withOpacity(0.6),
+      backgroundColor: themeProvider.isDarkMode
+          ? const Color(0xFF2D1B69) // Dark purple background for dark theme
+          : Colors.white, // White background for light theme
+      selectedItemColor: themeProvider.isDarkMode
+          ? Colors.white
+          : const Color(0xFF5329C8), // Purple icons for light theme
+      unselectedItemColor: themeProvider.isDarkMode
+          ? Colors.white.withOpacity(0.6)
+          : const Color(
+              0xFF5329C8,
+            ).withOpacity(0.6), // Purple icons with opacity for light theme
       showSelectedLabels: false,
       showUnselectedLabels: false,
       elevation: 0,
