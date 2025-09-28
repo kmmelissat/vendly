@@ -84,7 +84,7 @@ class GreetingHeader extends StatelessWidget {
         crossAxisCount: 2,
         crossAxisSpacing: 12,
         mainAxisSpacing: 12,
-        childAspectRatio: 1.4,
+        childAspectRatio: 1.8,
       ),
       itemCount: metrics.length,
       itemBuilder: (context, index) {
@@ -111,7 +111,7 @@ class GreetingHeader extends StatelessWidget {
               ),
             ),
             child: Padding(
-              padding: const EdgeInsets.all(12.0),
+              padding: const EdgeInsets.all(10.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -143,7 +143,7 @@ class GreetingHeader extends StatelessWidget {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 8),
 
                   // Value
                   Text(
@@ -153,7 +153,7 @@ class GreetingHeader extends StatelessWidget {
                       color: const Color(0xFF5329C8),
                     ),
                   ),
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 4),
 
                   // Change indicator
                   Row(
