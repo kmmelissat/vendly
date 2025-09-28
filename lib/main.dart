@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:go_router/go_router.dart';
 import 'theme/app_theme.dart';
 import 'widgets/custom_app_bar.dart';
 import 'widgets/custom_bottom_nav_bar.dart';
-import 'pages/home/home_page.dart';
-import 'pages/orders/orders_page.dart';
 import 'providers/theme_provider.dart';
+import 'router/app_router.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -26,7 +26,7 @@ class VendlyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return Consumer<ThemeProvider>(
       builder: (context, themeProvider, child) {
-        return MaterialApp(
+        return MaterialApp.router(
           title: 'Vendly',
           debugShowCheckedModeBanner: false,
           theme: AppTheme.lightTheme,
@@ -34,7 +34,7 @@ class VendlyApp extends StatelessWidget {
           themeMode: themeProvider.isDarkMode
               ? ThemeMode.dark
               : ThemeMode.light,
-          home: const MainPage(),
+          routerConfig: AppRouter.router,
         );
       },
     );
@@ -42,7 +42,8 @@ class VendlyApp extends StatelessWidget {
 }
 
 class MainPage extends StatefulWidget {
-  const MainPage({super.key});
+  final Widget child;
+  const MainPage({super.key, required this.child});
 
   @override
   State<MainPage> createState() => _MainPageState();
@@ -51,18 +52,50 @@ class MainPage extends StatefulWidget {
 class _MainPageState extends State<MainPage> {
   int _selectedIndex = 0;
 
-  final List<Widget> _pages = [
-    const HomePage(),
-    const OrdersPage(),
-    const ProductsPage(),
-    const Center(child: Text('Menu')), // Placeholder for menu
-    const ProfilePage(),
-  ];
-
   void _onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
     });
+
+    // Navigate using go_router
+    switch (index) {
+      case 0:
+        context.go('/home');
+        break;
+      case 1:
+        context.go('/orders');
+        break;
+      case 2:
+        context.go('/products');
+        break;
+      case 3:
+        // Menu - show popup (no navigation)
+        break;
+      case 4:
+        context.go('/profile');
+        break;
+    }
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Update selected index based on current route
+    final location = GoRouterState.of(context).uri.path;
+    switch (location) {
+      case '/home':
+        _selectedIndex = 0;
+        break;
+      case '/orders':
+        _selectedIndex = 1;
+        break;
+      case '/products':
+        _selectedIndex = 2;
+        break;
+      case '/profile':
+        _selectedIndex = 4;
+        break;
+    }
   }
 
   @override
@@ -85,7 +118,7 @@ class _MainPageState extends State<MainPage> {
 
     return Scaffold(
       appBar: const CustomAppBar(),
-      body: _pages[_selectedIndex],
+      body: widget.child,
       bottomNavigationBar: CustomBottomNavBar(
         selectedIndex: _selectedIndex,
         onItemTapped: _onItemTapped,
