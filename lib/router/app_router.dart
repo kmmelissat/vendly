@@ -15,22 +15,30 @@ class AppRouter {
           GoRoute(
             path: '/home',
             name: 'home',
-            builder: (context, state) => const HomePage(),
+            pageBuilder: (context, state) =>
+                NoTransitionPage(key: state.pageKey, child: const HomePage()),
           ),
           GoRoute(
             path: '/orders',
             name: 'orders',
-            builder: (context, state) => const OrdersPage(),
+            pageBuilder: (context, state) =>
+                NoTransitionPage(key: state.pageKey, child: const OrdersPage()),
           ),
           GoRoute(
             path: '/products',
             name: 'products',
-            builder: (context, state) => const ProductsPage(),
+            pageBuilder: (context, state) => NoTransitionPage(
+              key: state.pageKey,
+              child: const ProductsPage(),
+            ),
           ),
           GoRoute(
             path: '/profile',
             name: 'profile',
-            builder: (context, state) => const ProfilePage(),
+            pageBuilder: (context, state) => NoTransitionPage(
+              key: state.pageKey,
+              child: const ProfilePage(),
+            ),
           ),
         ],
       ),

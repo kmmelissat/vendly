@@ -50,14 +50,25 @@ class MainPage extends StatefulWidget {
 }
 
 class _MainPageState extends State<MainPage> {
-  int _selectedIndex = 0;
+  int get _selectedIndex {
+    // Calculate selected index based on current route
+    final location = GoRouterState.of(context).uri.path;
+    switch (location) {
+      case '/home':
+        return 0;
+      case '/orders':
+        return 1;
+      case '/products':
+        return 2;
+      case '/profile':
+        return 4;
+      default:
+        return 0;
+    }
+  }
 
   void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
-
-    // Navigate using go_router
+    // Navigate using go_router without manual state management
     switch (index) {
       case 0:
         context.go('/home');
@@ -73,27 +84,6 @@ class _MainPageState extends State<MainPage> {
         break;
       case 4:
         context.go('/profile');
-        break;
-    }
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    // Update selected index based on current route
-    final location = GoRouterState.of(context).uri.path;
-    switch (location) {
-      case '/home':
-        _selectedIndex = 0;
-        break;
-      case '/orders':
-        _selectedIndex = 1;
-        break;
-      case '/products':
-        _selectedIndex = 2;
-        break;
-      case '/profile':
-        _selectedIndex = 4;
         break;
     }
   }
