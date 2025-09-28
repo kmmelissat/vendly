@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 class OrdersList extends StatelessWidget {
   final String selectedFilter;
@@ -16,7 +17,7 @@ class OrdersList extends StatelessWidget {
       {
         'id': '#1002',
         'date': '11 Feb, 2024',
-        'customer': 'Wade Warren',
+        'customer': 'Carlos Hernández',
         'payment': 'Pending',
         'total': '\$20.00',
         'items': '2 items',
@@ -28,7 +29,7 @@ class OrdersList extends StatelessWidget {
       {
         'id': '#1004',
         'date': '13 Feb, 2024',
-        'customer': 'Esther Howard',
+        'customer': 'María Elena Rodríguez',
         'payment': 'Success',
         'total': '\$22.00',
         'items': '3 items',
@@ -40,7 +41,7 @@ class OrdersList extends StatelessWidget {
       {
         'id': '#1007',
         'date': '15 Feb, 2024',
-        'customer': 'Jenny Wilson',
+        'customer': 'Ana Sofía Martínez',
         'payment': 'Pending',
         'total': '\$25.00',
         'items': '1 items',
@@ -52,7 +53,7 @@ class OrdersList extends StatelessWidget {
       {
         'id': '#1009',
         'date': '17 Feb, 2024',
-        'customer': 'Guy Hawkins',
+        'customer': 'Roberto Castillo',
         'payment': 'Success',
         'total': '\$27.00',
         'items': '5 items',
@@ -64,7 +65,7 @@ class OrdersList extends StatelessWidget {
       {
         'id': '#1011',
         'date': '19 Feb, 2024',
-        'customer': 'Jacob Jones',
+        'customer': 'Gabriela Campos',
         'payment': 'Pending',
         'total': '\$32.00',
         'items': '4 items',
@@ -139,41 +140,69 @@ class OrdersList extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 12),
       elevation: 1,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            // Header Row
-            Row(
-              children: [
-                Text(
-                  order['id'],
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w600,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: () {
+          // Navigate to order details - encode the order ID to handle special characters
+          final encodedOrderId = Uri.encodeComponent(order['id']);
+          context.go('/orders/details/$encodedOrderId');
+        },
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            children: [
+              // Header Row
+              Row(
+                children: [
+                  Text(
+                    order['id'],
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
-                ),
-                const Spacer(),
-                Text(
-                  order['date'],
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Theme.of(
-                      context,
-                    ).colorScheme.onSurface.withOpacity(0.6),
+                  const Spacer(),
+                  Text(
+                    order['date'],
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withOpacity(0.6),
+                    ),
                   ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
+                ],
+              ),
+              const SizedBox(height: 12),
 
-            // Customer and Total Row
-            Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+              // Customer and Total Row
+              Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Customer',
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onSurface.withOpacity(0.6),
+                              ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          order['customer'],
+                          style: Theme.of(context).textTheme.bodyMedium
+                              ?.copyWith(fontWeight: FontWeight.w500),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
                       Text(
-                        'Customer',
+                        'Total',
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           color: Theme.of(
                             context,
@@ -182,96 +211,77 @@ class OrdersList extends StatelessWidget {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        order['customer'],
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          fontWeight: FontWeight.w500,
-                        ),
+                        order['total'],
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: const Color(0xFF5329C8),
+                            ),
                       ),
                     ],
                   ),
-                ),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Text(
-                      'Total',
+                ],
+              ),
+              const SizedBox(height: 12),
+
+              // Status Row
+              Row(
+                children: [
+                  // Payment Status
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: (order['paymentColor'] as Color).withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      order['payment'],
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Theme.of(
-                          context,
-                        ).colorScheme.onSurface.withOpacity(0.6),
+                        color: order['paymentColor'] as Color,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      order['total'],
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: const Color(0xFF5329C8),
+                  ),
+                  const SizedBox(width: 8),
+
+                  // Fulfillment Status
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: (order['fulfillmentColor'] as Color).withOpacity(
+                        0.1,
+                      ),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      order['fulfillment'],
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: order['fulfillmentColor'] as Color,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
-                  ],
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
+                  ),
+                  const Spacer(),
 
-            // Status Row
-            Row(
-              children: [
-                // Payment Status
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: (order['paymentColor'] as Color).withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    order['payment'],
+                  // Items count
+                  Text(
+                    order['items'],
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: order['paymentColor'] as Color,
-                      fontWeight: FontWeight.w600,
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withOpacity(0.6),
                     ),
                   ),
-                ),
-                const SizedBox(width: 8),
-
-                // Fulfillment Status
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: (order['fulfillmentColor'] as Color).withOpacity(
-                      0.1,
-                    ),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    order['fulfillment'],
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: order['fulfillmentColor'] as Color,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-                const Spacer(),
-
-                // Items count
-                Text(
-                  order['items'],
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Theme.of(
-                      context,
-                    ).colorScheme.onSurface.withOpacity(0.6),
-                  ),
-                ),
-              ],
-            ),
-          ],
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );
