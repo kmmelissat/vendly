@@ -4,6 +4,7 @@ import '../main.dart';
 import '../pages/home/home_page.dart';
 import '../pages/orders/orders_page.dart';
 import '../pages/orders/order_details_page.dart';
+import '../pages/products/products_page.dart';
 
 class AppRouter {
   static final GoRouter router = GoRouter(
