@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'banner_carousel.dart';
 
 class GreetingHeader extends StatelessWidget {
   const GreetingHeader({super.key});
@@ -36,6 +37,10 @@ class GreetingHeader extends StatelessWidget {
             color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
           ),
         ),
+        const SizedBox(height: 24),
+
+        // Banner Carousel
+        const BannerCarousel(),
         const SizedBox(height: 24),
 
         // Business Metrics Cards

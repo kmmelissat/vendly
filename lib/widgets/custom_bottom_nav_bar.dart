@@ -91,6 +91,7 @@ class CustomBottomNavBar extends StatelessWidget {
               _buildMenuItem(context, Icons.analytics, 'Analytics'),
               _buildMenuItem(context, Icons.people, 'Customers'),
               _buildMenuItem(context, Icons.campaign, 'Marketing'),
+              _buildMenuItem(context, Icons.account_balance_wallet, 'Finances'),
               _buildThemeToggleItem(context),
               _buildMenuItem(context, Icons.settings, 'Settings'),
               const SizedBox(height: 20),

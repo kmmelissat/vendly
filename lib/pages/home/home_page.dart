@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'components/greeting_header.dart';
 import 'components/notification_items.dart';
+import 'components/urgent_orders.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
@@ -12,12 +13,16 @@ class HomePage extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Personalized Greeting Header
+          // Personalized Greeting Header (includes banner and metrics)
           GreetingHeader(),
           SizedBox(height: 32),
 
           // Notification Items
           NotificationItems(),
+          SizedBox(height: 32),
+
+          // Urgent Orders to Fulfill
+          UrgentOrders(),
           SizedBox(height: 32),
         ],
       ),
