@@ -4,8 +4,8 @@ import 'package:provider/provider.dart';
 import 'theme/app_theme.dart';
 import 'widgets/custom_app_bar.dart';
 import 'widgets/custom_bottom_nav_bar.dart';
-import 'pages/home_page.dart';
-import 'pages/orders_page.dart';
+import 'pages/home/home_page.dart';
+import 'pages/orders/orders_page.dart';
 import 'providers/theme_provider.dart';
 
 void main() async {
