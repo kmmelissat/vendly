@@ -5,6 +5,7 @@ import 'theme/app_theme.dart';
 import 'widgets/custom_app_bar.dart';
 import 'widgets/custom_bottom_nav_bar.dart';
 import 'pages/home_page.dart';
+import 'pages/orders_page.dart';
 import 'providers/theme_provider.dart';
 
 void main() async {
@@ -88,20 +89,6 @@ class _MainPageState extends State<MainPage> {
       bottomNavigationBar: CustomBottomNavBar(
         selectedIndex: _selectedIndex,
         onItemTapped: _onItemTapped,
-      ),
-    );
-  }
-}
-
-class OrdersPage extends StatelessWidget {
-  const OrdersPage({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return const Center(
-      child: Text(
-        'Orders Page',
-        style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
       ),
     );
   }
