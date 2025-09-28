@@ -48,12 +48,12 @@ class _BannerCarouselState extends State<BannerCarousel> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        // Banner Carousel
-        SizedBox(
-          height: 120,
-          child: PageView.builder(
+    return SizedBox(
+      height: 120,
+      child: Stack(
+        children: [
+          // Banner Carousel
+          PageView.builder(
             controller: _pageController,
             onPageChanged: (index) {
               setState(() {
@@ -118,40 +118,51 @@ class _BannerCarouselState extends State<BannerCarousel> {
               );
             },
           ),
-        ),
-        const SizedBox(height: 12),
 
-        // Page Indicators
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: bannerImages.asMap().entries.map((entry) {
-            final index = entry.key;
-            final isActive = index == _currentIndex;
+          // Page Indicators - Positioned inside the banner
+          Positioned(
+            bottom: 12,
+            left: 0,
+            right: 0,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: bannerImages.asMap().entries.map((entry) {
+                final index = entry.key;
+                final isActive = index == _currentIndex;
 
-            return GestureDetector(
-              onTap: () {
-                _pageController.animateToPage(
-                  index,
-                  duration: const Duration(milliseconds: 300),
-                  curve: Curves.easeInOut,
+                return GestureDetector(
+                  onTap: () {
+                    _pageController.animateToPage(
+                      index,
+                      duration: const Duration(milliseconds: 300),
+                      curve: Curves.easeInOut,
+                    );
+                  },
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 300),
+                    margin: const EdgeInsets.symmetric(horizontal: 4),
+                    width: isActive ? 24 : 8,
+                    height: 8,
+                    decoration: BoxDecoration(
+                      color: isActive
+                          ? Colors.white
+                          : Colors.white.withOpacity(0.5),
+                      borderRadius: BorderRadius.circular(4),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.2),
+                          blurRadius: 4,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                  ),
                 );
-              },
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 300),
-                margin: const EdgeInsets.symmetric(horizontal: 4),
-                width: isActive ? 24 : 8,
-                height: 8,
-                decoration: BoxDecoration(
-                  color: isActive
-                      ? const Color(0xFF5329C8)
-                      : const Color(0xFF5329C8).withOpacity(0.3),
-                  borderRadius: BorderRadius.circular(4),
-                ),
-              ),
-            );
-          }).toList(),
-        ),
-      ],
+              }).toList(),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

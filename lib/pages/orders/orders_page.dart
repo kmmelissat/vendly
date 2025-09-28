@@ -68,7 +68,10 @@ class _OrdersPageState extends State<OrdersPage> {
           const SizedBox(height: 16),
 
           // Orders List
-          const OrdersList(),
+          OrdersList(
+            selectedFilter: filterTabs[selectedFilterIndex],
+            selectedDateRange: selectedDateRange,
+          ),
         ],
       ),
     );

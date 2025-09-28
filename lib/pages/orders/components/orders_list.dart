@@ -1,7 +1,14 @@
 import 'package:flutter/material.dart';
 
 class OrdersList extends StatelessWidget {
-  const OrdersList({super.key});
+  final String selectedFilter;
+  final DateTimeRange? selectedDateRange;
+
+  const OrdersList({
+    super.key,
+    required this.selectedFilter,
+    this.selectedDateRange,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -14,6 +21,7 @@ class OrdersList extends StatelessWidget {
         'total': '\$20.00',
         'items': '2 items',
         'fulfillment': 'Unfulfilled',
+        'status': 'Open', // Order status for filtering
         'paymentColor': const Color(0xFFFF9800),
         'fulfillmentColor': const Color(0xFFF44336),
       },
@@ -25,6 +33,7 @@ class OrdersList extends StatelessWidget {
         'total': '\$22.00',
         'items': '3 items',
         'fulfillment': 'Fulfilled',
+        'status': 'Closed', // Order status for filtering
         'paymentColor': const Color(0xFF4CAF50),
         'fulfillmentColor': const Color(0xFF4CAF50),
       },
@@ -36,6 +45,7 @@ class OrdersList extends StatelessWidget {
         'total': '\$25.00',
         'items': '1 items',
         'fulfillment': 'Unfulfilled',
+        'status': 'Open', // Order status for filtering
         'paymentColor': const Color(0xFFFF9800),
         'fulfillmentColor': const Color(0xFFF44336),
       },
@@ -47,6 +57,7 @@ class OrdersList extends StatelessWidget {
         'total': '\$27.00',
         'items': '5 items',
         'fulfillment': 'Fulfilled',
+        'status': 'Closed', // Order status for filtering
         'paymentColor': const Color(0xFF4CAF50),
         'fulfillmentColor': const Color(0xFF4CAF50),
       },
@@ -58,16 +69,69 @@ class OrdersList extends StatelessWidget {
         'total': '\$32.00',
         'items': '4 items',
         'fulfillment': 'Unfulfilled',
+        'status': 'Open', // Order status for filtering
         'paymentColor': const Color(0xFFFF9800),
         'fulfillmentColor': const Color(0xFFF44336),
       },
     ];
 
+    // Filter orders based on selected filter
+    final filteredOrders = _filterOrders(sampleOrders);
+
+    if (filteredOrders.isEmpty) {
+      return Center(
+        child: Column(
+          children: [
+            const SizedBox(height: 40),
+            Icon(
+              Icons.inbox_outlined,
+              size: 64,
+              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.3),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'No orders found',
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Try adjusting your filters',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
     return Column(
-      children: sampleOrders
+      children: filteredOrders
           .map((order) => _buildOrderCard(context, order))
           .toList(),
     );
+  }
+
+  List<Map<String, dynamic>> _filterOrders(List<Map<String, dynamic>> orders) {
+    return orders.where((order) {
+      // Apply filter based on selected filter
+      switch (selectedFilter) {
+        case 'All':
+          return true;
+        case 'Unfulfilled':
+          return order['fulfillment'] == 'Unfulfilled';
+        case 'Unpaid':
+          return order['payment'] == 'Pending';
+        case 'Open':
+          return order['status'] == 'Open';
+        case 'Closed':
+          return order['status'] == 'Closed';
+        default:
+          return true;
+      }
+    }).toList();
   }
 
   Widget _buildOrderCard(BuildContext context, Map<String, dynamic> order) {
