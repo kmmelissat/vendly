@@ -121,14 +121,14 @@ class ProfilePage extends StatelessWidget {
           // Profile Picture
           CircleAvatar(
             radius: 60,
-            backgroundImage: const AssetImage('assets/images/luma.png'),
+            backgroundImage: const AssetImage('assets/images/labubu.png'),
             backgroundColor: Theme.of(
               context,
             ).colorScheme.primary.withOpacity(0.1),
           ),
           const SizedBox(height: 24),
           // User Name
-          Text('Luma', style: Theme.of(context).textTheme.headlineMedium),
+          Text('LabubuLand', style: Theme.of(context).textTheme.headlineMedium),
           const SizedBox(height: 8),
           Text(
             'Welcome to your profile',

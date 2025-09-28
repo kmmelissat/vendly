@@ -49,7 +49,7 @@ class CustomBottomNavBar extends StatelessWidget {
         const BottomNavigationBarItem(
           icon: CircleAvatar(
             radius: 12,
-            backgroundImage: AssetImage('assets/images/luma.png'),
+            backgroundImage: AssetImage('assets/images/labubu.png'),
           ),
           label: '',
         ),
