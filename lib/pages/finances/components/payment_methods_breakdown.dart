@@ -61,8 +61,8 @@ class PaymentMethodsBreakdown extends StatelessWidget {
                         const SizedBox(height: 12),
                         _buildPaymentMethodItem(
                           context,
-                          'Nico (Digital Wallet)',
-                          'nico',
+                          'N1co (Digital Wallet)',
+                          'n1co',
                           Icons.wallet,
                           const Color(0xFF4CAF50),
                         ),
@@ -77,7 +77,7 @@ class PaymentMethodsBreakdown extends StatelessWidget {
                         const SizedBox(height: 12),
                         _buildPaymentMethodItem(
                           context,
-                          'Salvadorian Card',
+                          'Card',
                           'card_sv',
                           Icons.credit_card,
                           const Color(0xFF9C27B0),
