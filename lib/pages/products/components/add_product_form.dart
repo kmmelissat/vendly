@@ -110,7 +110,7 @@ class _AddProductFormState extends State<AddProductForm> {
 
               // Title
               Text(
-                'Agregar Nuevo Producto',
+                'Add New Product',
                 style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                   fontWeight: FontWeight.bold,
                 ),
@@ -160,7 +160,7 @@ class _AddProductFormState extends State<AddProductForm> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Imagen del Producto',
+          'Product Image',
           style: Theme.of(
             context,
           ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
@@ -220,7 +220,7 @@ class _AddProductFormState extends State<AddProductForm> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Información Básica',
+          'Basic Information',
           style: Theme.of(
             context,
           ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
@@ -229,8 +229,8 @@ class _AddProductFormState extends State<AddProductForm> {
         TextFormField(
           controller: _nameController,
           decoration: InputDecoration(
-            labelText: 'Nombre del Producto *',
-            hintText: 'Ej: Labubu Classic Pink',
+            labelText: 'Product Name *',
+            hintText: 'Ex: Labubu Classic Pink',
             prefixIcon: const Icon(Icons.inventory_2_outlined),
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
             focusedBorder: OutlineInputBorder(
@@ -251,10 +251,10 @@ class _AddProductFormState extends State<AddProductForm> {
           textCapitalization: TextCapitalization.words,
           validator: (value) {
             if (value == null || value.isEmpty) {
-              return 'Por favor ingresa el nombre del producto';
+              return 'Please enter the product name';
             }
             if (value.length < 3) {
-              return 'El nombre debe tener al menos 3 caracteres';
+              return 'Name must be at least 3 characters';
             }
             return null;
           },
@@ -266,8 +266,8 @@ class _AddProductFormState extends State<AddProductForm> {
               child: TextFormField(
                 controller: _brandController,
                 decoration: InputDecoration(
-                  labelText: 'Marca *',
-                  hintText: 'Ej: POP MART',
+                  labelText: 'Brand *',
+                  hintText: 'Ex: POP MART',
                   prefixIcon: const Icon(Icons.business_outlined),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -293,10 +293,10 @@ class _AddProductFormState extends State<AddProductForm> {
                 textCapitalization: TextCapitalization.words,
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Ingresa la marca';
+                    return 'Enter the brand';
                   }
                   if (value.length < 2) {
-                    return 'Marca muy corta';
+                    return 'Brand too short';
                   }
                   return null;
                 },
@@ -334,10 +334,10 @@ class _AddProductFormState extends State<AddProductForm> {
                 textCapitalization: TextCapitalization.characters,
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Ingresa el SKU';
+                    return 'Enter the SKU';
                   }
                   if (value.length < 3) {
-                    return 'SKU muy corto';
+                    return 'SKU too short';
                   }
                   return null;
                 },
@@ -349,7 +349,7 @@ class _AddProductFormState extends State<AddProductForm> {
         DropdownButtonFormField<String>(
           value: selectedCategory,
           decoration: InputDecoration(
-            labelText: 'Categoría *',
+            labelText: 'Category *',
             prefixIcon: const Icon(Icons.category_outlined),
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
             focusedBorder: OutlineInputBorder(
@@ -382,7 +382,7 @@ class _AddProductFormState extends State<AddProductForm> {
           },
           validator: (value) {
             if (value == null || value.isEmpty) {
-              return 'Selecciona una categoría';
+              return 'Select a category';
             }
             return null;
           },
@@ -396,7 +396,7 @@ class _AddProductFormState extends State<AddProductForm> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Precios',
+          'Pricing',
           style: Theme.of(
             context,
           ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
@@ -408,7 +408,7 @@ class _AddProductFormState extends State<AddProductForm> {
               child: TextFormField(
                 controller: _priceController,
                 decoration: InputDecoration(
-                  labelText: 'Precio Actual *',
+                  labelText: 'Current Price *',
                   hintText: '25.00',
                   prefixIcon: const Icon(Icons.attach_money_outlined),
                   prefixText: '\$',
@@ -438,14 +438,14 @@ class _AddProductFormState extends State<AddProductForm> {
                 ),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Ingresa el precio';
+                    return 'Enter the price';
                   }
                   final price = double.tryParse(value);
                   if (price == null) {
-                    return 'Precio inválido';
+                    return 'Invalid price';
                   }
                   if (price <= 0) {
-                    return 'El precio debe ser mayor a 0';
+                    return 'Price must be greater than 0';
                   }
                   return null;
                 },
@@ -456,7 +456,7 @@ class _AddProductFormState extends State<AddProductForm> {
               child: TextFormField(
                 controller: _originalPriceController,
                 decoration: InputDecoration(
-                  labelText: 'Precio Original',
+                  labelText: 'Original Price',
                   hintText: '30.00',
                   prefixIcon: const Icon(Icons.local_offer_outlined),
                   prefixText: '\$',
@@ -485,10 +485,10 @@ class _AddProductFormState extends State<AddProductForm> {
                     final originalPrice = double.tryParse(value);
                     final currentPrice = double.tryParse(_priceController.text);
                     if (originalPrice == null) {
-                      return 'Precio inválido';
+                      return 'Invalid price';
                     }
                     if (currentPrice != null && originalPrice <= currentPrice) {
-                      return 'Debe ser mayor al precio actual';
+                      return 'Must be greater than current price';
                     }
                   }
                   return null;
@@ -506,7 +506,7 @@ class _AddProductFormState extends State<AddProductForm> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Inventario',
+          'Inventory',
           style: Theme.of(
             context,
           ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
@@ -518,10 +518,10 @@ class _AddProductFormState extends State<AddProductForm> {
               child: TextFormField(
                 controller: _stockController,
                 decoration: InputDecoration(
-                  labelText: 'Cantidad en Stock',
+                  labelText: 'Stock Quantity',
                   hintText: '100',
                   prefixIcon: const Icon(Icons.inventory_outlined),
-                  suffixText: 'unidades',
+                  suffixText: 'units',
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
@@ -548,10 +548,10 @@ class _AddProductFormState extends State<AddProductForm> {
                   if (value != null && value.isNotEmpty) {
                     final stock = int.tryParse(value);
                     if (stock == null) {
-                      return 'Cantidad inválida';
+                      return 'Invalid quantity';
                     }
                     if (stock < 0) {
-                      return 'No puede ser negativo';
+                      return 'Cannot be negative';
                     }
                   }
                   return null;

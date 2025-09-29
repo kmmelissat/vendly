@@ -29,7 +29,7 @@ class ProductsHeader extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'My Listing',
+                'My Products',
                 style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                   fontWeight: FontWeight.bold,
                 ),
@@ -37,8 +37,8 @@ class ProductsHeader extends StatelessWidget {
               ElevatedButton(
                 onPressed: onAddProduct,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF9AFF9A),
-                  foregroundColor: Colors.black,
+                  backgroundColor: Theme.of(context).colorScheme.primary,
+                  foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(20),
                   ),
