@@ -66,14 +66,17 @@ class _ProductCardsViewState extends State<ProductCardsView> {
       return _buildEmptyState();
     }
 
-    return Column(
-      children: [
-        _buildControlsBar(),
-        const SizedBox(height: 16),
-        Expanded(
-          child: viewMode == 'grid' ? _buildGridView() : _buildListView(),
-        ),
-      ],
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        children: [
+          _buildControlsBar(),
+          const SizedBox(height: 20),
+          Expanded(
+            child: viewMode == 'grid' ? _buildGridView() : _buildListView(),
+          ),
+        ],
+      ),
     );
   }
 
@@ -190,10 +193,10 @@ class _ProductCardsViewState extends State<ProductCardsView> {
 
   Widget _buildGridView() {
     return GridView.builder(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.zero,
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
-        childAspectRatio: 0.6, // Further reduced to give even more height
+        childAspectRatio: 0.6,
         crossAxisSpacing: 16,
         mainAxisSpacing: 16,
       ),
@@ -209,13 +212,13 @@ class _ProductCardsViewState extends State<ProductCardsView> {
 
   Widget _buildListView() {
     return ListView.builder(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.zero,
       itemCount: sortedProducts.length,
       itemBuilder: (context, index) {
         return FadeInUp(
           delay: Duration(milliseconds: index * 50),
           child: Padding(
-            padding: const EdgeInsets.only(bottom: 12),
+            padding: const EdgeInsets.only(bottom: 16),
             child: _buildProductCard(sortedProducts[index], isGrid: false),
           ),
         );
@@ -248,11 +251,11 @@ class _ProductCardsViewState extends State<ProductCardsView> {
     return Card(
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        child: InkWell(
-          onTap: () => widget.onProductTap(product),
-          borderRadius: BorderRadius.circular(20),
-          child: Container(
-            padding: const EdgeInsets.all(16),
+      child: InkWell(
+        onTap: () => widget.onProductTap(product),
+        borderRadius: BorderRadius.circular(20),
+        child: Container(
+          padding: const EdgeInsets.all(16),
           child: isGrid
               ? _buildGridCardContent(
                   product,
@@ -590,38 +593,45 @@ class _ProductCardsViewState extends State<ProductCardsView> {
   }
 
   Widget _buildEmptyState() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          FadeInUp(
-            child: Icon(
-              Icons.inventory_2_outlined,
-              size: 80,
-              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.3),
-            ),
-          ),
-          const SizedBox(height: 24),
-          FadeInUp(
-            delay: const Duration(milliseconds: 200),
-            child: Text(
-              'No products found',
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            FadeInUp(
+              child: Icon(
+                Icons.inventory_2_outlined,
+                size: 80,
+                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.3),
               ),
             ),
-          ),
-          const SizedBox(height: 8),
-          FadeInUp(
-            delay: const Duration(milliseconds: 400),
-            child: Text(
-              'Try adjusting your search or filters',
-              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+            const SizedBox(height: 24),
+            FadeInUp(
+              delay: const Duration(milliseconds: 200),
+              child: Text(
+                'No products found',
+                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.onSurface.withOpacity(0.6),
+                ),
               ),
             ),
-          ),
-        ],
+            const SizedBox(height: 8),
+            FadeInUp(
+              delay: const Duration(milliseconds: 400),
+              child: Text(
+                'Try adjusting your search or filters',
+                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.onSurface.withOpacity(0.5),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
