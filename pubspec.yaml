@@ -47,6 +47,7 @@ dependencies:
   provider: ^6.1.1
   go_router: ^14.0.2
   url_launcher: ^6.2.4
+  shared_preferences: ^2.2.2
 
   # Animations
   animate_do: ^3.3.4

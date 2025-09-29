@@ -9,10 +9,12 @@ import '../pages/finances/finances_page.dart';
 import '../pages/customers/customers_page.dart';
 import '../pages/analytics/analytics_page.dart';
 import '../pages/profile/profile_page.dart';
+import '../pages/onboarding/onboarding_page.dart';
+import '../services/onboarding_service.dart';
 
 class AppRouter {
   static final GoRouter router = GoRouter(
-    initialLocation: '/home',
+    initialLocation: '/onboarding',
     errorBuilder: (context, state) => Scaffold(
       appBar: AppBar(title: const Text('Page Not Found')),
       body: Center(
@@ -34,8 +36,22 @@ class AppRouter {
       ),
     ),
     routes: [
-      // Redirect root to home
-      GoRoute(path: '/', redirect: (context, state) => '/home'),
+      // Onboarding Route (outside of shell)
+      GoRoute(
+        path: '/onboarding',
+        name: 'onboarding',
+        pageBuilder: (context, state) =>
+            NoTransitionPage(key: state.pageKey, child: const OnboardingPage()),
+      ),
+      // Redirect root based on onboarding status
+      GoRoute(
+        path: '/',
+        redirect: (context, state) async {
+          final isOnboardingCompleted =
+              await OnboardingService.isOnboardingCompleted();
+          return isOnboardingCompleted ? '/home' : '/onboarding';
+        },
+      ),
       ShellRoute(
         builder: (context, state, child) {
           return MainPage(child: child);
