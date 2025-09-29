@@ -91,10 +91,8 @@ class CustomBottomNavBar extends StatelessWidget {
               ),
               _buildMenuItem(context, Icons.analytics, 'Analytics'),
               _buildMenuItem(context, Icons.people, 'Customers'),
-              _buildMenuItem(context, Icons.campaign, 'Marketing'),
               _buildMenuItem(context, Icons.account_balance_wallet, 'Finances'),
               _buildThemeToggleItem(context),
-              _buildMenuItem(context, Icons.settings, 'Settings'),
               const SizedBox(height: 20),
             ],
           ),
@@ -124,14 +122,8 @@ class CustomBottomNavBar extends StatelessWidget {
           case 'Customers':
             context.go('/customers');
             break;
-          case 'Marketing':
-            // Navigate to marketing page when implemented
-            break;
           case 'Finances':
             context.go('/finances');
-            break;
-          case 'Settings':
-            // Navigate to settings page when implemented
             break;
         }
       },
