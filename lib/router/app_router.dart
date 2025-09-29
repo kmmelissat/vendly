@@ -7,6 +7,8 @@ import '../pages/orders/order_details_page.dart';
 import '../pages/products/products_page.dart';
 import '../pages/finances/finances_page.dart';
 import '../pages/customers/customers_page.dart';
+import '../pages/analytics/analytics_page.dart';
+import '../pages/profile/profile_page.dart';
 
 class AppRouter {
   static final GoRouter router = GoRouter(
@@ -84,6 +86,14 @@ class AppRouter {
             pageBuilder: (context, state) => NoTransitionPage(
               key: state.pageKey,
               child: const CustomersPage(),
+            ),
+          ),
+          GoRoute(
+            path: '/analytics',
+            name: 'analytics',
+            pageBuilder: (context, state) => NoTransitionPage(
+              key: state.pageKey,
+              child: const AnalyticsPage(),
             ),
           ),
           GoRoute(

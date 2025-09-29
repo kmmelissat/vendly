@@ -116,39 +116,3 @@ class _MainPageState extends State<MainPage> {
     );
   }
 }
-
-class ProfilePage extends StatelessWidget {
-  const ProfilePage({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        children: [
-          const SizedBox(height: 32),
-          // Profile Picture
-          CircleAvatar(
-            radius: 60,
-            backgroundImage: const AssetImage('assets/images/labubu.png'),
-            backgroundColor: Theme.of(
-              context,
-            ).colorScheme.primary.withOpacity(0.1),
-          ),
-          const SizedBox(height: 24),
-          // User Name
-          Text('LabubuLand', style: Theme.of(context).textTheme.headlineMedium),
-          const SizedBox(height: 8),
-          Text(
-            'Welcome to your profile',
-            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-              color: Theme.of(context).textTheme.bodySmall?.color,
-            ),
-          ),
-          const SizedBox(height: 32),
-          // Add more profile content here as needed
-        ],
-      ),
-    );
-  }
-}

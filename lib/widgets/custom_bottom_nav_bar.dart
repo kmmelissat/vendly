@@ -119,7 +119,7 @@ class CustomBottomNavBar extends StatelessWidget {
         // Handle menu item tap based on title
         switch (title) {
           case 'Analytics':
-            // Navigate to analytics page when implemented
+            context.go('/analytics');
             break;
           case 'Customers':
             context.go('/customers');
