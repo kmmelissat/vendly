@@ -122,7 +122,7 @@ class CustomBottomNavBar extends StatelessWidget {
             // Navigate to analytics page when implemented
             break;
           case 'Customers':
-            // Navigate to customers page when implemented
+            context.go('/customers');
             break;
           case 'Marketing':
             // Navigate to marketing page when implemented

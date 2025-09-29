@@ -103,6 +103,7 @@ flutter:
   assets:
     - assets/images/
     - assets/images/banner/
+    - assets/images/customers/
     - assets/images/products/
     - assets/icon/
 
