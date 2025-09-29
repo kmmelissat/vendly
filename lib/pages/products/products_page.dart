@@ -13,16 +13,6 @@ class ProductsPage extends StatefulWidget {
 
 class _ProductsPageState extends State<ProductsPage> {
   String searchQuery = '';
-  String selectedCategory = 'All';
-
-  final List<String> categories = [
-    'All',
-    'Labubu',
-    'Plush',
-    'Sonny Angel',
-    'Ternuritos',
-    'Others',
-  ];
 
   final List<Map<String, dynamic>> products = [
     {
@@ -416,9 +406,7 @@ class _ProductsPageState extends State<ProductsPage> {
       final matchesSearch = product['name'].toString().toLowerCase().contains(
         searchQuery.toLowerCase(),
       );
-      final matchesCategory =
-          selectedCategory == 'All' || product['category'] == selectedCategory;
-      return matchesSearch && matchesCategory;
+      return matchesSearch;
     }).toList();
   }
 
@@ -429,16 +417,9 @@ class _ProductsPageState extends State<ProductsPage> {
         children: [
           ProductsHeader(
             searchQuery: searchQuery,
-            selectedCategory: selectedCategory,
-            categories: categories,
             onSearchChanged: (value) {
               setState(() {
                 searchQuery = value;
-              });
-            },
-            onCategoryChanged: (category) {
-              setState(() {
-                selectedCategory = category;
               });
             },
             onAddProduct: () => _showAddProductForm(context),

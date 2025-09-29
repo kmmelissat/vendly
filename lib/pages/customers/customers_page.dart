@@ -165,80 +165,72 @@ class _CustomersPageState extends State<CustomersPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: CustomScrollView(
-        slivers: [
-          // App Bar
-          SliverAppBar(
-            expandedHeight: 120,
-            floating: false,
-            pinned: true,
-            backgroundColor: Theme.of(context).colorScheme.surface,
-            flexibleSpace: FlexibleSpaceBar(
-              title: const Text(
-                'Customers',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-              background: Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      Theme.of(context).colorScheme.primary.withOpacity(0.1),
-                      Theme.of(context).colorScheme.secondary.withOpacity(0.1),
-                    ],
-                  ),
+      body: Column(
+        children: [
+          // Simple Header
+          Container(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Customers',
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
                 ),
-              ),
+              ],
             ),
           ),
 
           // Content
-          SliverPadding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
-            sliver: SliverList(
-              delegate: SliverChildListDelegate([
-                // Customer Statistics
-                CustomersStats(customers: customers),
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              child: Column(
+                children: [
+                  // Customer Statistics
+                  CustomersStats(customers: customers),
 
-                const SizedBox(height: 24),
+                  const SizedBox(height: 24),
 
-                // Search and Filters
-                CustomersHeader(
-                  searchQuery: searchQuery,
-                  selectedFilter: selectedFilter,
-                  sortBy: sortBy,
-                  filterOptions: filterOptions,
-                  sortOptions: sortOptions,
-                  onSearchChanged: (query) {
-                    setState(() {
-                      searchQuery = query;
-                    });
-                  },
-                  onFilterChanged: (filter) {
-                    setState(() {
-                      selectedFilter = filter;
-                    });
-                  },
-                  onSortChanged: (sort) {
-                    setState(() {
-                      sortBy = sort;
-                    });
-                  },
-                ),
+                  // Search and Filters
+                  CustomersHeader(
+                    searchQuery: searchQuery,
+                    selectedFilter: selectedFilter,
+                    sortBy: sortBy,
+                    filterOptions: filterOptions,
+                    sortOptions: sortOptions,
+                    onSearchChanged: (query) {
+                      setState(() {
+                        searchQuery = query;
+                      });
+                    },
+                    onFilterChanged: (filter) {
+                      setState(() {
+                        selectedFilter = filter;
+                      });
+                    },
+                    onSortChanged: (sort) {
+                      setState(() {
+                        sortBy = sort;
+                      });
+                    },
+                  ),
 
-                const SizedBox(height: 24),
+                  const SizedBox(height: 24),
 
-                // Customers List
-                CustomersList(
-                  customers: filteredCustomers,
-                  onCustomerTap: (customer) {
-                    _showCustomerDetails(context, customer);
-                  },
-                ),
+                  // Customers List
+                  CustomersList(
+                    customers: filteredCustomers,
+                    onCustomerTap: (customer) {
+                      _showCustomerDetails(context, customer);
+                    },
+                  ),
 
-                const SizedBox(height: 100), // Bottom padding for navigation
-              ]),
+                  const SizedBox(height: 100), // Bottom padding for navigation
+                ],
+              ),
             ),
           ),
         ],

@@ -20,7 +20,7 @@ class ProductCardsView extends StatefulWidget {
 class _ProductCardsViewState extends State<ProductCardsView> {
   String sortBy = 'name'; // name, price, stock
   bool sortAscending = true;
-  String viewMode = 'grid'; // grid, list
+  String viewMode = 'list'; // grid, list
 
   List<Map<String, dynamic>> get sortedProducts {
     final products = List<Map<String, dynamic>>.from(widget.products);

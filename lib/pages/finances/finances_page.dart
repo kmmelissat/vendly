@@ -45,94 +45,112 @@ class _FinancesPageState extends State<FinancesPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: CustomScrollView(
-        slivers: [
-          // App Bar
-          SliverAppBar(
-            expandedHeight: 120,
-            floating: false,
-            pinned: true,
-            backgroundColor: Theme.of(context).colorScheme.surface,
-            flexibleSpace: FlexibleSpaceBar(
-              title: const Text(
-                'Finances',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-              background: Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      Theme.of(context).colorScheme.primary.withOpacity(0.1),
-                      Theme.of(context).colorScheme.secondary.withOpacity(0.1),
-                    ],
+      body: Column(
+        children: [
+          // Simple Header
+          Container(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Finances',
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                ),
+                // Period Selector
+                Container(
+                  height: 32,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 0,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.surfaceContainerHighest,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: Theme.of(context).dividerColor.withOpacity(0.3),
+                    ),
+                  ),
+                  child: DropdownButtonHideUnderline(
+                    child: DropdownButton<String>(
+                      value: selectedPeriod,
+                      isDense: true,
+                      icon: Icon(
+                        Icons.keyboard_arrow_down,
+                        size: 16,
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.onSurface.withOpacity(0.6),
+                      ),
+                      style: const TextStyle(fontSize: 12),
+                      items: periods.map((period) {
+                        return DropdownMenuItem(
+                          value: period,
+                          child: Text(
+                            period,
+                            style: const TextStyle(fontSize: 12),
+                          ),
+                        );
+                      }).toList(),
+                      onChanged: (value) {
+                        if (value != null) {
+                          setState(() {
+                            selectedPeriod = value;
+                          });
+                        }
+                      },
+                    ),
                   ),
                 ),
-              ),
+              ],
             ),
-            actions: [
-              // Period Selector
-              Padding(
-                padding: const EdgeInsets.only(right: 16),
-                child: DropdownButton<String>(
-                  value: selectedPeriod,
-                  underline: const SizedBox(),
-                  style: Theme.of(context).textTheme.bodyMedium,
-                  items: periods.map((period) {
-                    return DropdownMenuItem(value: period, child: Text(period));
-                  }).toList(),
-                  onChanged: (value) {
-                    if (value != null) {
-                      setState(() {
-                        selectedPeriod = value;
-                      });
-                    }
-                  },
-                ),
-              ),
-            ],
           ),
 
           // Content
-          SliverPadding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
-            sliver: SliverList(
-              delegate: SliverChildListDelegate([
-                // Financial Summary Cards
-                FinancialSummaryCards(
-                  totalRevenue: financialData['totalRevenue'],
-                  totalExpenses: financialData['totalExpenses'],
-                  netProfit: financialData['netProfit'],
-                  totalTransactions: financialData['totalTransactions'],
-                ),
-
-                const SizedBox(height: 24),
-
-                // Revenue Chart
-                RevenueChart(
-                  monthlyData: List<Map<String, dynamic>>.from(
-                    financialData['monthlyRevenue'],
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              child: Column(
+                children: [
+                  // Financial Summary Cards
+                  FinancialSummaryCards(
+                    totalRevenue: financialData['totalRevenue'],
+                    totalExpenses: financialData['totalExpenses'],
+                    netProfit: financialData['netProfit'],
+                    totalTransactions: financialData['totalTransactions'],
                   ),
-                  selectedPeriod: selectedPeriod,
-                ),
 
-                const SizedBox(height: 24),
+                  const SizedBox(height: 24),
 
-                // Payment Methods Breakdown
-                PaymentMethodsBreakdown(
-                  paymentData: Map<String, dynamic>.from(
-                    financialData['paymentMethods'],
+                  // Revenue Chart
+                  RevenueChart(
+                    monthlyData: List<Map<String, dynamic>>.from(
+                      financialData['monthlyRevenue'],
+                    ),
+                    selectedPeriod: selectedPeriod,
                   ),
-                ),
 
-                const SizedBox(height: 24),
+                  const SizedBox(height: 24),
 
-                // Recent Transactions
-                const RecentTransactions(),
+                  // Payment Methods Breakdown
+                  PaymentMethodsBreakdown(
+                    paymentData: Map<String, dynamic>.from(
+                      financialData['paymentMethods'],
+                    ),
+                  ),
 
-                const SizedBox(height: 100), // Bottom padding for navigation
-              ]),
+                  const SizedBox(height: 24),
+
+                  // Recent Transactions
+                  const RecentTransactions(),
+
+                  const SizedBox(height: 100), // Bottom padding for navigation
+                ],
+              ),
             ),
           ),
         ],

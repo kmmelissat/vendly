@@ -62,7 +62,7 @@ class PaymentMethodsBreakdown extends StatelessWidget {
                         _buildPaymentMethodItem(
                           context,
                           'N1co (Digital Wallet)',
-                          'n1co',
+                          'nico',
                           Icons.wallet,
                           const Color(0xFF4CAF50),
                         ),
@@ -193,6 +193,11 @@ class PaymentMethodsBreakdown extends StatelessWidget {
   ) {
     final data = paymentData[key];
 
+    // Return empty container if data is null
+    if (data == null) {
+      return const SizedBox.shrink();
+    }
+
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -231,14 +236,14 @@ class PaymentMethodsBreakdown extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      '\$${data['amount'].toStringAsFixed(2)}',
+                      '\$${(data['amount'] ?? 0.0).toStringAsFixed(2)}',
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         fontWeight: FontWeight.bold,
                         color: color,
                       ),
                     ),
                     Text(
-                      '${data['count']} transactions',
+                      '${data['count'] ?? 0} transactions',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: Theme.of(
                           context,
