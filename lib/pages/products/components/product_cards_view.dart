@@ -79,10 +79,10 @@ class _ProductCardsViewState extends State<ProductCardsView> {
 
   Widget _buildControlsBar() {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(25),
         border: Border.all(
           color: Theme.of(context).dividerColor.withOpacity(0.2),
         ),
@@ -143,7 +143,7 @@ class _ProductCardsViewState extends State<ProductCardsView> {
           Container(
             decoration: BoxDecoration(
               color: Theme.of(context).colorScheme.surfaceContainerHighest,
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(20),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
@@ -247,12 +247,12 @@ class _ProductCardsViewState extends State<ProductCardsView> {
 
     return Card(
       elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: InkWell(
-        onTap: () => widget.onProductTap(product),
-        borderRadius: BorderRadius.circular(12),
-        child: Container(
-          padding: const EdgeInsets.all(12),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        child: InkWell(
+          onTap: () => widget.onProductTap(product),
+          borderRadius: BorderRadius.circular(20),
+          child: Container(
+            padding: const EdgeInsets.all(16),
           child: isGrid
               ? _buildGridCardContent(
                   product,
@@ -292,11 +292,11 @@ class _ProductCardsViewState extends State<ProductCardsView> {
           child: Container(
             width: double.infinity,
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(16),
               color: Theme.of(context).colorScheme.surfaceContainerHighest,
             ),
             child: ClipRRect(
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(16),
               child: product['image'] != null
                   ? Image.asset(
                       product['image'],
@@ -363,7 +363,7 @@ class _ProductCardsViewState extends State<ProductCardsView> {
                     ),
                     decoration: BoxDecoration(
                       color: stockLevelColor.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(15),
                     ),
                     child: Text(
                       stockLevel.toString(),
@@ -449,11 +449,11 @@ class _ProductCardsViewState extends State<ProductCardsView> {
           width: 80,
           height: 80,
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(16),
             color: Theme.of(context).colorScheme.surfaceContainerHighest,
           ),
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(16),
             child: product['image'] != null
                 ? Image.asset(
                     product['image'],
@@ -510,7 +510,7 @@ class _ProductCardsViewState extends State<ProductCardsView> {
                     ),
                     decoration: BoxDecoration(
                       color: stockLevelColor.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
                       'Stock: $stockLevel',
@@ -565,6 +565,9 @@ class _ProductCardsViewState extends State<ProductCardsView> {
                 ).colorScheme.primary.withOpacity(0.1),
                 foregroundColor: Theme.of(context).colorScheme.primary,
                 minimumSize: const Size(36, 36),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(18),
+                ),
               ),
             ),
           ],

@@ -40,11 +40,11 @@ class ProductsHeader extends StatelessWidget {
                   backgroundColor: Theme.of(context).colorScheme.primary,
                   foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20),
+                    borderRadius: BorderRadius.circular(30),
                   ),
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 8,
+                    horizontal: 20,
+                    vertical: 12,
                   ),
                 ),
                 child: const Text('Add New Product'),
@@ -62,11 +62,12 @@ class ProductsHeader extends StatelessWidget {
               hintText: 'Search products...',
               prefixIcon: const Icon(Icons.search),
               border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(25),
                 borderSide: BorderSide.none,
               ),
               filled: true,
               fillColor: Theme.of(context).colorScheme.surface,
+              contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
             ),
           ),
         ),
@@ -95,6 +96,9 @@ class ProductsHeader extends StatelessWidget {
                   backgroundColor: Colors.transparent,
                   selectedColor: const Color(0xFF5329C8).withOpacity(0.1),
                   checkmarkColor: const Color(0xFF5329C8),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(25),
+                  ),
                   labelStyle: TextStyle(
                     color: isSelected
                         ? const Color(0xFF5329C8)
