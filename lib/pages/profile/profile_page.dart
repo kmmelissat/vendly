@@ -15,7 +15,7 @@ class _ProfilePageState extends State<ProfilePage> {
   // Sample user data
   final Map<String, dynamic> userData = {
     'name': 'LabubuLand',
-    'email': 'melissa@linkup.com',
+    'email': 'melissa@vendly.com',
     'phone': '+503 7123-4567',
     'role': 'Store Manager',
     'joinDate': '2023-08-15',
@@ -431,7 +431,7 @@ class _ProfilePageState extends State<ProfilePage> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: const Text('Help & Support'),
         content: const Text(
-          'For support, please contact us at support@linkup.com',
+          'For support, please contact us at support@vendly.com',
         ),
         actions: [
           TextButton(
@@ -448,9 +448,9 @@ class _ProfilePageState extends State<ProfilePage> {
       context: context,
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text('About LinkUp'),
+        title: const Text('About Vendly'),
         content: const Text(
-          'LinkUp v1.0.0\nYour inventory management solution.',
+          'Vendly v1.0.0\nYour inventory management solution.',
         ),
         actions: [
           TextButton(
