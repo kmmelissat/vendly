@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:animate_do/animate_do.dart';
 
 class RecentTransactions extends StatelessWidget {
   const RecentTransactions({super.key});
@@ -92,10 +91,7 @@ class RecentTransactions extends StatelessWidget {
             itemCount: transactions.length,
             separatorBuilder: (context, index) => const SizedBox(height: 12),
             itemBuilder: (context, index) {
-              return FadeInUp(
-                duration: Duration(milliseconds: 300 + (index * 100)),
-                child: _buildTransactionItem(context, transactions[index]),
-              );
+              return _buildTransactionItem(context, transactions[index]);
             },
           ),
         ],
@@ -108,7 +104,7 @@ class RecentTransactions extends StatelessWidget {
     Map<String, dynamic> transaction,
   ) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(16),
@@ -201,6 +197,7 @@ class RecentTransactions extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Expanded(
+                      flex: 2,
                       child: Text(
                         transaction['products'].join(', '),
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
@@ -212,12 +209,17 @@ class RecentTransactions extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
-                    Text(
-                      _formatDate(transaction['date']),
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Theme.of(
-                          context,
-                        ).colorScheme.onSurface.withOpacity(0.5),
+                    const SizedBox(width: 8),
+                    Flexible(
+                      child: Text(
+                        _formatDate(transaction['date']),
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.onSurface.withOpacity(0.5),
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                   ],

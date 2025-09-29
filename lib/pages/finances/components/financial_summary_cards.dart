@@ -30,9 +30,9 @@ class FinancialSummaryCards extends StatelessWidget {
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           crossAxisCount: 2,
-          childAspectRatio: 1.5,
-          crossAxisSpacing: 16,
-          mainAxisSpacing: 16,
+          childAspectRatio: 1.3,
+          crossAxisSpacing: 12,
+          mainAxisSpacing: 12,
           children: [
             _buildSummaryCard(
               context,
@@ -81,7 +81,7 @@ class FinancialSummaryCards extends StatelessWidget {
     String change,
   ) {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(20),
@@ -128,18 +128,26 @@ class FinancialSummaryCards extends StatelessWidget {
             ],
           ),
           const Spacer(),
-          Text(
-            value,
-            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-              fontWeight: FontWeight.bold,
-              color: color,
+          Flexible(
+            child: Text(
+              value,
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: color,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
           ),
           const SizedBox(height: 4),
-          Text(
-            title,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+          Flexible(
+            child: Text(
+              title,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
           ),
         ],

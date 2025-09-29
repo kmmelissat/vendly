@@ -96,7 +96,7 @@ class _FinancesPageState extends State<FinancesPage> {
 
           // Content
           SliverPadding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
             sliver: SliverList(
               delegate: SliverChildListDelegate([
                 // Financial Summary Cards

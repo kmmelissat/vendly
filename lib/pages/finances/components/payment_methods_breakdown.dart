@@ -28,65 +28,127 @@ class PaymentMethodsBreakdown extends StatelessWidget {
           ),
           const SizedBox(height: 24),
 
-          Row(
-            children: [
-              // Pie Chart
-              Expanded(
-                flex: 2,
-                child: SizedBox(
-                  height: 200,
-                  child: PieChart(
-                    PieChartData(
-                      sectionsSpace: 4,
-                      centerSpaceRadius: 40,
-                      sections: _buildPieChartSections(),
-                    ),
-                  ),
-                ),
-              ),
-
-              const SizedBox(width: 24),
-
-              // Legend and Details
-              Expanded(
-                flex: 3,
-                child: Column(
+          LayoutBuilder(
+            builder: (context, constraints) {
+              if (constraints.maxWidth < 600) {
+                // Stack layout for smaller screens
+                return Column(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    _buildPaymentMethodItem(
-                      context,
-                      'Bank Transfer',
-                      'transfer',
-                      Icons.account_balance,
-                      const Color(0xFF2196F3),
+                    // Pie Chart
+                    SizedBox(
+                      height: 200,
+                      child: PieChart(
+                        PieChartData(
+                          sectionsSpace: 4,
+                          centerSpaceRadius: 40,
+                          sections: _buildPieChartSections(),
+                        ),
+                      ),
                     ),
-                    const SizedBox(height: 16),
-                    _buildPaymentMethodItem(
-                      context,
-                      'Nico (Digital Wallet)',
-                      'nico',
-                      Icons.wallet,
-                      const Color(0xFF4CAF50),
-                    ),
-                    const SizedBox(height: 16),
-                    _buildPaymentMethodItem(
-                      context,
-                      'Cash on Delivery',
-                      'cash_delivery',
-                      Icons.local_shipping,
-                      const Color(0xFFFF9800),
-                    ),
-                    const SizedBox(height: 16),
-                    _buildPaymentMethodItem(
-                      context,
-                      ' Card',
-                      'card_sv',
-                      Icons.credit_card,
-                      const Color(0xFF9C27B0),
+                    const SizedBox(height: 24),
+                    // Legend and Details
+                    Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        _buildPaymentMethodItem(
+                          context,
+                          'Bank Transfer',
+                          'transfer',
+                          Icons.account_balance,
+                          const Color(0xFF2196F3),
+                        ),
+                        const SizedBox(height: 12),
+                        _buildPaymentMethodItem(
+                          context,
+                          'Nico (Digital Wallet)',
+                          'nico',
+                          Icons.wallet,
+                          const Color(0xFF4CAF50),
+                        ),
+                        const SizedBox(height: 12),
+                        _buildPaymentMethodItem(
+                          context,
+                          'Cash on Delivery',
+                          'cash_delivery',
+                          Icons.local_shipping,
+                          const Color(0xFFFF9800),
+                        ),
+                        const SizedBox(height: 12),
+                        _buildPaymentMethodItem(
+                          context,
+                          'Salvadorian Card',
+                          'card_sv',
+                          Icons.credit_card,
+                          const Color(0xFF9C27B0),
+                        ),
+                      ],
                     ),
                   ],
-                ),
-              ),
-            ],
+                );
+              } else {
+                // Row layout for larger screens
+                return Row(
+                  children: [
+                    // Pie Chart
+                    Expanded(
+                      flex: 2,
+                      child: SizedBox(
+                        height: 200,
+                        child: PieChart(
+                          PieChartData(
+                            sectionsSpace: 4,
+                            centerSpaceRadius: 40,
+                            sections: _buildPieChartSections(),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 24),
+                    // Legend and Details
+                    Expanded(
+                      flex: 3,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          _buildPaymentMethodItem(
+                            context,
+                            'Bank Transfer',
+                            'transfer',
+                            Icons.account_balance,
+                            const Color(0xFF2196F3),
+                          ),
+                          const SizedBox(height: 16),
+                          _buildPaymentMethodItem(
+                            context,
+                            'Nico (Digital Wallet)',
+                            'nico',
+                            Icons.wallet,
+                            const Color(0xFF4CAF50),
+                          ),
+                          const SizedBox(height: 16),
+                          _buildPaymentMethodItem(
+                            context,
+                            'Cash on Delivery',
+                            'cash_delivery',
+                            Icons.local_shipping,
+                            const Color(0xFFFF9800),
+                          ),
+                          const SizedBox(height: 16),
+                          _buildPaymentMethodItem(
+                            context,
+                            'Salvadorian Card',
+                            'card_sv',
+                            Icons.credit_card,
+                            const Color(0xFF9C27B0),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                );
+              }
+            },
           ),
         ],
       ),
@@ -132,7 +194,7 @@ class PaymentMethodsBreakdown extends StatelessWidget {
     final data = paymentData[key];
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: color.withOpacity(0.1),
         borderRadius: BorderRadius.circular(16),
@@ -151,13 +213,18 @@ class PaymentMethodsBreakdown extends StatelessWidget {
           const SizedBox(width: 12),
           Expanded(
             child: Column(
+              mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  name,
-                  style: Theme.of(
-                    context,
-                  ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
+                Flexible(
+                  child: Text(
+                    name,
+                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
                 const SizedBox(height: 4),
                 Row(
