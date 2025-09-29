@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../providers/theme_provider.dart';
 
-class CustomBottomNavBar extends StatelessWidget {
+class CustomBottomNavBar extends ConsumerWidget {
   final int selectedIndex;
   final Function(int) onItemTapped;
 
@@ -14,18 +14,18 @@ class CustomBottomNavBar extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
-    final themeProvider = Provider.of<ThemeProvider>(context);
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isDarkMode = ref.watch(themeProvider);
 
     return BottomNavigationBar(
       type: BottomNavigationBarType.fixed,
-      backgroundColor: themeProvider.isDarkMode
+      backgroundColor: isDarkMode
           ? const Color(0xFF2D1B69) // Dark purple background for dark theme
           : Colors.white, // White background for light theme
-      selectedItemColor: themeProvider.isDarkMode
+      selectedItemColor: isDarkMode
           ? Colors.white
           : const Color(0xFF5329C8), // Purple icons for light theme
-      unselectedItemColor: themeProvider.isDarkMode
+      unselectedItemColor: isDarkMode
           ? Colors.white.withOpacity(0.6)
           : const Color(
               0xFF5329C8,
@@ -42,7 +42,7 @@ class CustomBottomNavBar extends StatelessWidget {
         const BottomNavigationBarItem(icon: Icon(Icons.inventory), label: ''),
         BottomNavigationBarItem(
           icon: GestureDetector(
-            onTap: () => _showPopupMenu(context),
+            onTap: () => _showPopupMenu(context, ref),
             child: const Icon(Icons.more_horiz),
           ),
           label: '',
@@ -59,7 +59,7 @@ class CustomBottomNavBar extends StatelessWidget {
       onTap: (index) {
         if (index == 3) {
           // Don't change selected index for menu button
-          _showPopupMenu(context);
+          _showPopupMenu(context, ref);
         } else {
           onItemTapped(index);
         }
@@ -67,7 +67,7 @@ class CustomBottomNavBar extends StatelessWidget {
     );
   }
 
-  void _showPopupMenu(BuildContext context) {
+  void _showPopupMenu(BuildContext context, WidgetRef ref) {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
@@ -92,7 +92,7 @@ class CustomBottomNavBar extends StatelessWidget {
               _buildMenuItem(context, Icons.analytics, 'Analytics'),
               _buildMenuItem(context, Icons.people, 'Customers'),
               _buildMenuItem(context, Icons.account_balance_wallet, 'Finances'),
-              _buildThemeToggleItem(context),
+              _buildThemeToggleItem(context, ref),
               const SizedBox(height: 20),
             ],
           ),
@@ -130,33 +130,31 @@ class CustomBottomNavBar extends StatelessWidget {
     );
   }
 
-  Widget _buildThemeToggleItem(BuildContext context) {
-    return Consumer<ThemeProvider>(
-      builder: (context, themeProvider, child) {
-        return ListTile(
-          leading: Icon(
-            themeProvider.isDarkMode ? Icons.light_mode : Icons.dark_mode,
-            color: Theme.of(context).colorScheme.primary,
-          ),
-          title: Text(
-            themeProvider.isDarkMode ? 'Light Theme' : 'Dark Theme',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w500,
-              color: Theme.of(context).colorScheme.onSurface,
-            ),
-          ),
-          trailing: Switch(
-            value: themeProvider.isDarkMode,
-            onChanged: (value) {
-              themeProvider.toggleTheme();
-            },
-            activeColor: Theme.of(context).colorScheme.primary,
-          ),
-          onTap: () {
-            themeProvider.toggleTheme();
-          },
-        );
+  Widget _buildThemeToggleItem(BuildContext context, WidgetRef ref) {
+    final isDarkMode = ref.watch(themeProvider);
+
+    return ListTile(
+      leading: Icon(
+        isDarkMode ? Icons.light_mode : Icons.dark_mode,
+        color: Theme.of(context).colorScheme.primary,
+      ),
+      title: Text(
+        isDarkMode ? 'Light Theme' : 'Dark Theme',
+        style: TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.w500,
+          color: Theme.of(context).colorScheme.onSurface,
+        ),
+      ),
+      trailing: Switch(
+        value: isDarkMode,
+        onChanged: (value) {
+          ref.read(themeProvider.notifier).toggleTheme();
+        },
+        activeColor: Theme.of(context).colorScheme.primary,
+      ),
+      onTap: () {
+        ref.read(themeProvider.notifier).toggleTheme();
       },
     );
   }

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'theme/app_theme.dart';
 import 'widgets/custom_app_bar.dart';
@@ -11,45 +11,36 @@ import 'router/app_router.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  runApp(
-    ChangeNotifierProvider(
-      create: (context) => ThemeProvider(),
-      child: const VendlyApp(),
-    ),
-  );
+  runApp(const ProviderScope(child: VendlyApp()));
 }
 
-class VendlyApp extends StatelessWidget {
+class VendlyApp extends ConsumerWidget {
   const VendlyApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return Consumer<ThemeProvider>(
-      builder: (context, themeProvider, child) {
-        return MaterialApp.router(
-          title: 'Vendly',
-          debugShowCheckedModeBanner: false,
-          theme: AppTheme.lightTheme,
-          darkTheme: AppTheme.darkTheme,
-          themeMode: themeProvider.isDarkMode
-              ? ThemeMode.dark
-              : ThemeMode.light,
-          routerConfig: AppRouter.router,
-        );
-      },
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isDarkMode = ref.watch(themeProvider);
+
+    return MaterialApp.router(
+      title: 'Vendly',
+      debugShowCheckedModeBanner: false,
+      theme: AppTheme.lightTheme,
+      darkTheme: AppTheme.darkTheme,
+      themeMode: isDarkMode ? ThemeMode.dark : ThemeMode.light,
+      routerConfig: AppRouter.router,
     );
   }
 }
 
-class MainPage extends StatefulWidget {
+class MainPage extends ConsumerStatefulWidget {
   final Widget child;
   const MainPage({super.key, required this.child});
 
   @override
-  State<MainPage> createState() => _MainPageState();
+  ConsumerState<MainPage> createState() => _MainPageState();
 }
 
-class _MainPageState extends State<MainPage> {
+class _MainPageState extends ConsumerState<MainPage> {
   int get _selectedIndex {
     // Calculate selected index based on current route
     final location = GoRouterState.of(context).uri.path;
@@ -90,17 +81,17 @@ class _MainPageState extends State<MainPage> {
 
   @override
   Widget build(BuildContext context) {
-    final themeProvider = Provider.of<ThemeProvider>(context);
+    final isDarkMode = ref.watch(themeProvider);
 
     // Set system UI overlay style based on theme
     SystemChrome.setSystemUIOverlayStyle(
       SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
-        statusBarIconBrightness: themeProvider.isDarkMode
+        statusBarIconBrightness: isDarkMode
             ? Brightness.light
             : Brightness.dark,
         systemNavigationBarColor: Colors.transparent,
-        systemNavigationBarIconBrightness: themeProvider.isDarkMode
+        systemNavigationBarIconBrightness: isDarkMode
             ? Brightness.light
             : Brightness.dark,
       ),

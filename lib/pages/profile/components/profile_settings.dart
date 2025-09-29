@@ -1,17 +1,17 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../providers/theme_provider.dart';
 
-class ProfileSettings extends StatefulWidget {
+class ProfileSettings extends ConsumerStatefulWidget {
   final Map<String, dynamic> preferences;
 
   const ProfileSettings({super.key, required this.preferences});
 
   @override
-  State<ProfileSettings> createState() => _ProfileSettingsState();
+  ConsumerState<ProfileSettings> createState() => _ProfileSettingsState();
 }
 
-class _ProfileSettingsState extends State<ProfileSettings> {
+class _ProfileSettingsState extends ConsumerState<ProfileSettings> {
   late Map<String, dynamic> _preferences;
 
   @override
@@ -84,7 +84,7 @@ class _ProfileSettingsState extends State<ProfileSettings> {
                             _preferences['darkMode'] = value;
                           });
                           // Toggle theme
-                          context.read<ThemeProvider>().toggleTheme();
+                          ref.read(themeProvider.notifier).toggleTheme();
                         },
                       ),
                     ],
