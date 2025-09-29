@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:go_router/go_router.dart';
 import '../providers/theme_provider.dart';
 
 class CustomBottomNavBar extends StatelessWidget {
@@ -115,8 +116,24 @@ class CustomBottomNavBar extends StatelessWidget {
       ),
       onTap: () {
         Navigator.pop(context);
-        // Handle menu item tap
-        // You can add navigation logic here based on the title
+        // Handle menu item tap based on title
+        switch (title) {
+          case 'Analytics':
+            // Navigate to analytics page when implemented
+            break;
+          case 'Customers':
+            // Navigate to customers page when implemented
+            break;
+          case 'Marketing':
+            // Navigate to marketing page when implemented
+            break;
+          case 'Finances':
+            context.go('/finances');
+            break;
+          case 'Settings':
+            // Navigate to settings page when implemented
+            break;
+        }
       },
     );
   }
