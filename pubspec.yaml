@@ -75,6 +75,9 @@ dependencies:
 
   # File handling
   path: ^1.8.3
+  dio: ^5.9.0
+  flutter_bloc: ^9.1.1
+  bloc: ^9.1.0
 
 dev_dependencies:
   flutter_test:
