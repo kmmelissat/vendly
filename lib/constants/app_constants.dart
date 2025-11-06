@@ -6,6 +6,7 @@ class AppConstants {
   
   // Storage Keys
   static const String tokenKey = 'auth_token';
+  static const String refreshTokenKey = 'refresh_token';
   static const String userDataKey = 'user_data';
   static const String onboardingCompletedKey = 'onboarding_completed';
   static const String themeKey = 'theme_mode';
@@ -103,7 +104,8 @@ class AppConstants {
   static const bool enableAnalytics = true;
   
   // Debug Settings
-  static const bool enableDebugMode = false;
+  static const bool enableDebugMode = true; // Set to false for production
   static const bool enableLogging = true;
+  static const bool enableDetailedErrorMessages = true; // Show debug info in error messages
   static const bool enableCrashReporting = true;
 }
