@@ -10,7 +10,10 @@ import '../pages/customers/customers_page.dart';
 import '../pages/analytics/analytics_page.dart';
 import '../pages/profile/profile_page.dart';
 import '../pages/onboarding/onboarding_page.dart';
+import '../pages/auth/login_page.dart';
+import '../pages/auth/register_page.dart';
 import '../services/onboarding_service.dart';
+import '../services/auth_service.dart';
 
 class AppRouter {
   static final GoRouter router = GoRouter(
@@ -43,13 +46,32 @@ class AppRouter {
         pageBuilder: (context, state) =>
             NoTransitionPage(key: state.pageKey, child: const OnboardingPage()),
       ),
-      // Redirect root based on onboarding status
+      // Auth Routes (outside of shell)
+      GoRoute(
+        path: '/login',
+        name: 'login',
+        pageBuilder: (context, state) =>
+            NoTransitionPage(key: state.pageKey, child: const LoginPage()),
+      ),
+      GoRoute(
+        path: '/register',
+        name: 'register',
+        pageBuilder: (context, state) =>
+            NoTransitionPage(key: state.pageKey, child: const RegisterPage()),
+      ),
+      // Redirect root based on onboarding and auth status
       GoRoute(
         path: '/',
         redirect: (context, state) async {
           final isOnboardingCompleted =
               await OnboardingService.isOnboardingCompleted();
-          return isOnboardingCompleted ? '/home' : '/onboarding';
+          if (!isOnboardingCompleted) {
+            return '/onboarding';
+          }
+          
+          final authService = AuthService();
+          final isAuthenticated = await authService.isAuthenticated();
+          return isAuthenticated ? '/home' : '/login';
         },
       ),
       ShellRoute(

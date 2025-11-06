@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'theme/app_theme.dart';
 import 'widgets/custom_app_bar.dart';
 import 'widgets/custom_bottom_nav_bar.dart';
 import 'providers/theme_provider.dart';
 import 'router/app_router.dart';
+import 'pages/auth/auth_bloc.dart';
+import 'services/auth_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -21,13 +24,16 @@ class VendlyApp extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final isDarkMode = ref.watch(themeProvider);
 
-    return MaterialApp.router(
-      title: 'Vendly',
-      debugShowCheckedModeBanner: false,
-      theme: AppTheme.lightTheme,
-      darkTheme: AppTheme.darkTheme,
-      themeMode: isDarkMode ? ThemeMode.dark : ThemeMode.light,
-      routerConfig: AppRouter.router,
+    return BlocProvider(
+      create: (context) => AuthBloc(authService: AuthService()),
+      child: MaterialApp.router(
+        title: 'Vendly',
+        debugShowCheckedModeBanner: false,
+        theme: AppTheme.lightTheme,
+        darkTheme: AppTheme.darkTheme,
+        themeMode: isDarkMode ? ThemeMode.dark : ThemeMode.light,
+        routerConfig: AppRouter.router,
+      ),
     );
   }
 }

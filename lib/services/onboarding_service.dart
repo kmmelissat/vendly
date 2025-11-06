@@ -1,20 +1,20 @@
 import 'package:shared_preferences/shared_preferences.dart';
+import '../constants/app_constants.dart';
 
 class OnboardingService {
-  static const String _onboardingKey = 'onboarding_completed';
 
   static Future<bool> isOnboardingCompleted() async {
     final prefs = await SharedPreferences.getInstance();
-    return prefs.getBool(_onboardingKey) ?? false;
+    return prefs.getBool(AppConstants.onboardingCompletedKey) ?? false;
   }
 
   static Future<void> completeOnboarding() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool(_onboardingKey, true);
+    await prefs.setBool(AppConstants.onboardingCompletedKey, true);
   }
 
   static Future<void> resetOnboarding() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.remove(_onboardingKey);
+    await prefs.remove(AppConstants.onboardingCompletedKey);
   }
 }

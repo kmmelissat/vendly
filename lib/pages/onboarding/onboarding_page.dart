@@ -300,10 +300,10 @@ class _OnboardingPageState extends State<OnboardingPage> {
   }
 
   void _completeOnboarding() async {
-    // Mark onboarding as completed and navigate to home
+    // Mark onboarding as completed and navigate to login
     await OnboardingService.completeOnboarding();
     if (mounted) {
-      context.go('/home');
+      context.go('/login');
     }
   }
 }
