@@ -16,13 +16,13 @@ class LoginPage extends StatefulWidget {
 
 class _LoginPageState extends State<LoginPage> {
   final _formKey = GlobalKey<FormState>();
-  final _emailController = TextEditingController();
+  final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
 
   @override
   void dispose() {
-    _emailController.dispose();
+    _usernameController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
@@ -38,11 +38,7 @@ class _LoginPageState extends State<LoginPage> {
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [
-              Color(0xFF5329C8),
-              Color(0xFF7B4AE8),
-              Color(0xFF9D74F0),
-            ],
+            colors: [Color(0xFF5329C8), Color(0xFF7B4AE8), Color(0xFF9D74F0)],
           ),
         ),
         child: SafeArea(
@@ -62,16 +58,16 @@ class _LoginPageState extends State<LoginPage> {
             },
             child: SingleChildScrollView(
               padding: EdgeInsets.fromLTRB(
-                24, 
-                24, 
-                24, 
-                MediaQuery.of(context).padding.bottom + 24
+                24,
+                24,
+                24,
+                MediaQuery.of(context).padding.bottom + 24,
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   const SizedBox(height: 40),
-                  
+
                   // Logo and Welcome Text
                   Column(
                     children: [
@@ -126,14 +122,13 @@ class _LoginPageState extends State<LoginPage> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          // Email Field
+                          // Username Field
                           TextFormField(
-                            controller: _emailController,
-                            keyboardType: TextInputType.emailAddress,
+                            controller: _usernameController,
                             decoration: InputDecoration(
-                              labelText: 'Email',
-                              hintText: 'Enter your email',
-                              prefixIcon: const Icon(Icons.email_outlined),
+                              labelText: 'Username',
+                              hintText: 'Enter your username',
+                              prefixIcon: const Icon(Icons.person_outline),
                               filled: true,
                               fillColor: AppColors.lightGrey,
                               border: OutlineInputBorder(
@@ -150,11 +145,10 @@ class _LoginPageState extends State<LoginPage> {
                             ),
                             validator: (value) {
                               if (value == null || value.isEmpty) {
-                                return 'Please enter your email';
+                                return 'Please enter your username';
                               }
-                              if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
-                                  .hasMatch(value)) {
-                                return 'Please enter a valid email';
+                              if (value.length < 3) {
+                                return 'Username must be at least 3 characters';
                               }
                               return null;
                             },
@@ -237,17 +231,20 @@ class _LoginPageState extends State<LoginPage> {
                                     : () {
                                         if (_formKey.currentState!.validate()) {
                                           context.read<AuthBloc>().add(
-                                                LoginRequested(
-                                                  email: _emailController.text,
-                                                  password: _passwordController.text,
-                                                ),
-                                              );
+                                            LoginRequested(
+                                              email: _usernameController.text,
+                                              password:
+                                                  _passwordController.text,
+                                            ),
+                                          );
                                         }
                                       },
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: AppColors.primary,
                                   foregroundColor: Colors.white,
-                                  padding: const EdgeInsets.symmetric(vertical: 16),
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 16,
+                                  ),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(12),
                                   ),
@@ -259,9 +256,10 @@ class _LoginPageState extends State<LoginPage> {
                                         width: 20,
                                         child: CircularProgressIndicator(
                                           strokeWidth: 2,
-                                          valueColor: AlwaysStoppedAnimation<Color>(
-                                            Colors.white,
-                                          ),
+                                          valueColor:
+                                              AlwaysStoppedAnimation<Color>(
+                                                Colors.white,
+                                              ),
                                         ),
                                       )
                                     : const Text(
@@ -286,7 +284,9 @@ class _LoginPageState extends State<LoginPage> {
                                 ),
                               ),
                               Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 16),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                ),
                                 child: Text(
                                   'OR',
                                   style: TextStyle(
@@ -314,7 +314,9 @@ class _LoginPageState extends State<LoginPage> {
                             label: const Text('Continue with Google'),
                             style: OutlinedButton.styleFrom(
                               padding: const EdgeInsets.symmetric(vertical: 12),
-                              side: BorderSide(color: AppColors.grey.withOpacity(0.3)),
+                              side: BorderSide(
+                                color: AppColors.grey.withOpacity(0.3),
+                              ),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(12),
                               ),

@@ -20,6 +20,8 @@ class _RegisterPageState extends State<RegisterPage> {
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
   final _storeNameController = TextEditingController();
+  final _storeLocationController = TextEditingController();
+  final _storeTypeController = TextEditingController();
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
   bool _acceptTerms = false;
@@ -31,6 +33,8 @@ class _RegisterPageState extends State<RegisterPage> {
     _passwordController.dispose();
     _confirmPasswordController.dispose();
     _storeNameController.dispose();
+    _storeLocationController.dispose();
+    _storeTypeController.dispose();
     super.dispose();
   }
 
@@ -203,6 +207,74 @@ class _RegisterPageState extends State<RegisterPage> {
                               }
                               if (value.length < 2) {
                                 return 'Store name must be at least 2 characters';
+                              }
+                              return null;
+                            },
+                          ),
+
+                          const SizedBox(height: 16),
+
+                          // Store Location Field
+                          TextFormField(
+                            controller: _storeLocationController,
+                            decoration: InputDecoration(
+                              labelText: 'Store Location',
+                              hintText: 'Enter your store address',
+                              prefixIcon: const Icon(Icons.location_on_outlined),
+                              filled: true,
+                              fillColor: AppColors.lightGrey,
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide.none,
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: const BorderSide(
+                                  color: AppColors.primary,
+                                  width: 2,
+                                ),
+                              ),
+                            ),
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return 'Please enter your store location';
+                              }
+                              if (value.length < 10) {
+                                return 'Store location must be at least 10 characters';
+                              }
+                              return null;
+                            },
+                          ),
+
+                          const SizedBox(height: 16),
+
+                          // Store Type Field
+                          TextFormField(
+                            controller: _storeTypeController,
+                            decoration: InputDecoration(
+                              labelText: 'Store Type',
+                              hintText: 'e.g., Handmade Crafts, Electronics, Fashion',
+                              prefixIcon: const Icon(Icons.category_outlined),
+                              filled: true,
+                              fillColor: AppColors.lightGrey,
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide.none,
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: const BorderSide(
+                                  color: AppColors.primary,
+                                  width: 2,
+                                ),
+                              ),
+                            ),
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return 'Please enter your store type';
+                              }
+                              if (value.length < 3) {
+                                return 'Store type must be at least 3 characters';
                               }
                               return null;
                             },
@@ -411,6 +483,8 @@ class _RegisterPageState extends State<RegisterPage> {
                                                   email: _emailController.text,
                                                   password: _passwordController.text,
                                                   storeName: _storeNameController.text,
+                                                  storeLocation: _storeLocationController.text,
+                                                  storeType: _storeTypeController.text,
                                                 ),
                                               );
                                         }

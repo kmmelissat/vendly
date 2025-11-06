@@ -36,13 +36,17 @@ class AuthService {
 
   // Login method
   Future<Map<String, dynamic>> login({
-    required String email,
+    required String
+    email, // This is actually username but keeping parameter name for compatibility
     required String password,
   }) async {
     try {
       final response = await _dio.post(
         ApiConstants.loginEndpoint,
-        data: {'email': email, 'password': password},
+        data: {
+          'username': email,
+          'password': password,
+        }, // Send as username to API
       );
 
       if (response.statusCode == 200) {
@@ -62,7 +66,7 @@ class AuthService {
       if (e.response != null) {
         switch (e.response!.statusCode) {
           case 400:
-            errorMessage = 'Invalid email or password';
+            errorMessage = 'Invalid username or password';
             break;
           case 401:
             errorMessage = 'Invalid credentials';
@@ -95,6 +99,8 @@ class AuthService {
     required String email,
     required String password,
     String? storeName,
+    String? storeLocation,
+    String? storeType,
   }) async {
     try {
       final response = await _dio.post(
@@ -105,6 +111,8 @@ class AuthService {
           'password': password,
           'user_type': ApiConstants.storeUserType,
           'store_name': storeName ?? '$name\'s Store',
+          'store_location': storeLocation ?? 'Location not specified',
+          'type': storeType ?? 'General Store',
         },
       );
 

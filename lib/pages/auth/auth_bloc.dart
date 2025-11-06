@@ -54,6 +54,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         email: event.email,
         password: event.password,
         storeName: event.storeName,
+        storeLocation: event.storeLocation,
+        storeType: event.storeType,
       );
 
       if (result['success'] == true) {

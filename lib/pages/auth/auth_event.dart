@@ -12,12 +12,16 @@ class RegisterRequested extends AuthEvent {
   final String email;
   final String password;
   final String? storeName;
+  final String? storeLocation;
+  final String? storeType;
 
   RegisterRequested({
     required this.name,
     required this.email,
     required this.password,
     this.storeName,
+    this.storeLocation,
+    this.storeType,
   });
 }
 
