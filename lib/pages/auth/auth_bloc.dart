@@ -27,12 +27,13 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       );
 
       if (result['success'] == true) {
+        final user = result['user'] as Map<String, dynamic>? ?? {};
         emit(
           AuthSuccess(
-            token: result['token'],
-            userId: result['user']['id'],
-            name: result['user']['name'],
-            email: result['user']['email'],
+            token: result['token'] ?? '',
+            userId: user['id']?.toString(),
+            name: user['name']?.toString() ?? user['username']?.toString(),
+            email: user['email']?.toString() ?? user['username']?.toString(),
           ),
         );
       } else {
@@ -59,12 +60,13 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       );
 
       if (result['success'] == true) {
+        final user = result['user'] as Map<String, dynamic>? ?? {};
         emit(
           AuthSuccess(
-            token: result['token'],
-            userId: result['user']['id'],
-            name: result['user']['name'],
-            email: result['user']['email'],
+            token: result['token'] ?? '',
+            userId: user['id']?.toString(),
+            name: user['name']?.toString() ?? user['username']?.toString(),
+            email: user['email']?.toString() ?? user['username']?.toString(),
           ),
         );
       } else {
@@ -91,7 +93,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     if (event.isAuthenticated && event.token != null) {
       // You might want to fetch user data here
       // For now, we'll emit a basic success state
-      emit(AuthSuccess(token: event.token!, userId: '', name: '', email: ''));
+      emit(AuthSuccess(token: event.token!));
     } else {
       emit(AuthUnauthenticated());
     }

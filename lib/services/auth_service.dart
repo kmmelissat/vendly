@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../constants/api_constants.dart';
@@ -141,7 +142,12 @@ class AuthService {
 
         // Create a user object from the token or use username
         final userObject = {
+          'id':
+              email, // Using username as ID since we don't have user ID from API
           'username': email,
+          'name':
+              email, // Using username as name since we don't have separate name
+          'email': email, // Using username as email for compatibility
           'token_type': data['token_type'] ?? 'bearer',
         };
         await _saveUserData(userObject);
@@ -352,9 +358,12 @@ class AuthService {
     final prefs = await SharedPreferences.getInstance();
     final userJson = prefs.getString(AppConstants.userDataKey);
     if (userJson != null) {
-      // You might want to use dart:convert to decode JSON
-      // For now, returning null
-      return null;
+      try {
+        return jsonDecode(userJson) as Map<String, dynamic>;
+      } catch (e) {
+        LoggerService.error('Failed to decode user data', error: e);
+        return null;
+      }
     }
     return null;
   }
@@ -372,9 +381,13 @@ class AuthService {
 
   Future<void> _saveUserData(Map<String, dynamic> userData) async {
     final prefs = await SharedPreferences.getInstance();
-    // You might want to use dart:convert to encode JSON
-    // For now, just saving as string
-    await prefs.setString(AppConstants.userDataKey, userData.toString());
+    try {
+      final userJson = jsonEncode(userData);
+      await prefs.setString(AppConstants.userDataKey, userJson);
+      LoggerService.debug('User data saved successfully');
+    } catch (e) {
+      LoggerService.error('Failed to save user data', error: e);
+    }
   }
 
   Future<void> _clearAuthData() async {
