@@ -104,7 +104,7 @@ class ProductDetailsModal extends StatelessWidget {
         ),
         const SizedBox(height: 4),
         Text(
-          'by ${product['brand']}',
+          'by ${product['brand'] ?? 'Unknown Brand'}',
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
             color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
             fontStyle: FontStyle.italic,
@@ -116,7 +116,7 @@ class ProductDetailsModal extends StatelessWidget {
         Row(
           children: [
             Text(
-              '\$${product['price'].toStringAsFixed(2)}',
+              '\$${(product['price'] ?? 0.0).toStringAsFixed(2)}',
               style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                 fontWeight: FontWeight.bold,
                 color: const Color(0xFF5329C8),
@@ -124,9 +124,9 @@ class ProductDetailsModal extends StatelessWidget {
             ),
             const SizedBox(width: 8),
             if (product['originalPrice'] != null &&
-                product['originalPrice'] > product['price'])
+                (product['originalPrice'] ?? 0.0) > (product['price'] ?? 0.0))
               Text(
-                '\$${product['originalPrice'].toStringAsFixed(2)}',
+                '\$${(product['originalPrice'] ?? 0.0).toStringAsFixed(2)}',
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   decoration: TextDecoration.lineThrough,
                   color: Theme.of(
@@ -136,7 +136,7 @@ class ProductDetailsModal extends StatelessWidget {
               ),
             const Spacer(),
             Text(
-              'SKU: ${product['sku']}',
+              'SKU: ${product['sku'] ?? 'N/A'}',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
               ),
@@ -149,8 +149,9 @@ class ProductDetailsModal extends StatelessWidget {
         Row(
           children: [
             ...List.generate(5, (index) {
+              final rating = product['rating'] ?? 0.0;
               return Icon(
-                index < product['rating'].floor()
+                index < (rating is num ? rating.floor() : 0)
                     ? Icons.star_rounded
                     : Icons.star_border_rounded,
                 color: Colors.amber,
@@ -159,7 +160,7 @@ class ProductDetailsModal extends StatelessWidget {
             }),
             const SizedBox(width: 8),
             Text(
-              '${product['rating']} (${product['reviews']} reviews)',
+              '${product['rating'] ?? 0.0} (${product['reviews'] ?? 0} reviews)',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
               ),
@@ -174,24 +175,24 @@ class ProductDetailsModal extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
-                color: product['inStock']
+                color: (product['inStock'] ?? false)
                     ? Colors.green.withOpacity(0.1)
                     : Colors.red.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Text(
-                product['inStock'] ? 'In Stock' : 'Out of Stock',
+                (product['inStock'] ?? false) ? 'In Stock' : 'Out of Stock',
                 style: TextStyle(
-                  color: product['inStock'] ? Colors.green : Colors.red,
+                  color: (product['inStock'] ?? false) ? Colors.green : Colors.red,
                   fontWeight: FontWeight.w600,
                 ),
               ),
             ),
-            if (product['inStock'] && product['stockQuantity'] != null)
+            if ((product['inStock'] ?? false) && product['stockQuantity'] != null)
               Padding(
                 padding: const EdgeInsets.only(left: 12),
                 child: Text(
-                  '${product['stockQuantity']} units in inventory',
+                  '${product['stockQuantity'] ?? 0} units in inventory',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: Theme.of(
                       context,
@@ -402,7 +403,7 @@ class ProductDetailsModal extends StatelessWidget {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          '${product['stockQuantity']} units',
+                          '${product['stockQuantity'] ?? 0} units',
                           style: Theme.of(context).textTheme.titleLarge
                               ?.copyWith(
                                 fontWeight: FontWeight.bold,
@@ -418,15 +419,15 @@ class ProductDetailsModal extends StatelessWidget {
                       vertical: 6,
                     ),
                     decoration: BoxDecoration(
-                      color: product['inStock']
+                      color: (product['inStock'] ?? false)
                           ? Colors.green.withOpacity(0.1)
                           : Colors.red.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
-                      product['inStock'] ? 'Available' : 'Out of Stock',
+                      (product['inStock'] ?? false) ? 'Available' : 'Out of Stock',
                       style: TextStyle(
-                        color: product['inStock'] ? Colors.green : Colors.red,
+                        color: (product['inStock'] ?? false) ? Colors.green : Colors.red,
                         fontWeight: FontWeight.w600,
                         fontSize: 12,
                       ),
