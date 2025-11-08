@@ -1,8 +1,42 @@
 import 'package:flutter/material.dart';
 import 'banner_carousel.dart';
+import '../../../services/auth_service.dart';
 
-class GreetingHeader extends StatelessWidget {
+class GreetingHeader extends StatefulWidget {
   const GreetingHeader({super.key});
+
+  @override
+  State<GreetingHeader> createState() => _GreetingHeaderState();
+}
+
+class _GreetingHeaderState extends State<GreetingHeader> {
+  final AuthService _authService = AuthService();
+  String _storeName = 'Your Store';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadStoreName();
+  }
+
+  Future<void> _loadStoreName() async {
+    try {
+      final userData = await _authService.getUserData();
+      if (userData != null && mounted) {
+        final store = userData['store'] as Map<String, dynamic>?;
+        setState(() {
+          _storeName = store?['name'] ?? userData['username'] ?? 'Your Store';
+        });
+      }
+    } catch (e) {
+      // If there's an error, keep the default store name
+      if (mounted) {
+        setState(() {
+          _storeName = 'Your Store';
+        });
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -22,7 +56,7 @@ class GreetingHeader extends StatelessWidget {
       children: [
         // Greeting
         Text(
-          '$greeting, LabubuLand',
+          '$greeting, $_storeName',
           style: Theme.of(context).textTheme.headlineLarge?.copyWith(
             fontWeight: FontWeight.bold,
             color: Theme.of(context).colorScheme.onSurface,

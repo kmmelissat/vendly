@@ -263,6 +263,7 @@ class AuthService {
     String? storeName,
     String? storeLocation,
     String? storeType,
+    String? phone,
   }) async {
     try {
       final response = await _dio.post(
@@ -275,17 +276,79 @@ class AuthService {
           'store_name': storeName ?? '$name\'s Store',
           'store_location': storeLocation ?? 'Location not specified',
           'type': storeType ?? 'General Store',
+          'phone': phone ?? '',
         },
       );
 
       if (response.statusCode == 201 || response.statusCode == 200) {
         final data = response.data;
 
-        // Save token and user data
-        await _saveToken(data['token']);
-        await _saveUserData(data['user']);
+        LoggerService.info('Registration successful for user: $email');
 
-        return {'success': true, 'token': data['token'], 'user': data['user']};
+        // Validate response structure
+        if (data == null) {
+          LoggerService.error('Registration response data is null');
+          return {
+            'success': false,
+            'message': 'Invalid server response: no data',
+          };
+        }
+
+        if (data['access_token'] == null) {
+          LoggerService.error('Registration response missing access_token');
+          LoggerService.debug('Response data: $data');
+          return {
+            'success': false,
+            'message': 'Invalid server response: missing access_token',
+          };
+        }
+
+        // Save tokens
+        await _saveToken(data['access_token']);
+        if (data['refresh_token'] != null) {
+          await _saveRefreshToken(data['refresh_token']);
+        }
+
+        // Create enhanced user object from the detailed response
+        final apiUser = data['user'] as Map<String, dynamic>? ?? {};
+        final store = apiUser['store'] as Map<String, dynamic>? ?? {};
+
+        final userObject = {
+          'id': apiUser['id']?.toString() ?? '',
+          'username': apiUser['username'] ?? name,
+          'name': apiUser['username'] ?? name, // Using username as display name
+          'email': apiUser['email'] ?? email,
+          'user_type': apiUser['user_type'] ?? 'store',
+          'created_at': apiUser['created_at'],
+          'updated_at': apiUser['updated_at'],
+          'token_type': data['token_type'] ?? 'bearer',
+          'store': {
+            'id': store['id']?.toString() ?? '',
+            'name': store['name'] ?? storeName,
+            'store_location': store['store_location'] ?? storeLocation,
+            'type': store['type'] ?? storeType,
+            'phone': store['phone'] ?? phone,
+            'email': store['email'],
+            'profile_image': store['profile_image'],
+            'owner_id': store['owner_id']?.toString() ?? '',
+            'created_at': store['created_at'],
+            'updated_at': store['updated_at'],
+          },
+        };
+
+        await _saveUserData(userObject);
+
+        LoggerService.authEvent(
+          'Registration success',
+          data: {'username': name, 'email': email},
+        );
+        return {
+          'success': true,
+          'token': data['access_token'],
+          'user': userObject,
+          'refresh_token': data['refresh_token'],
+          'token_type': data['token_type'],
+        };
       } else {
         return {'success': false, 'message': 'Registration failed'};
       }

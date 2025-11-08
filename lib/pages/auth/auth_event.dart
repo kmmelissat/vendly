@@ -14,6 +14,7 @@ class RegisterRequested extends AuthEvent {
   final String? storeName;
   final String? storeLocation;
   final String? storeType;
+  final String? phone;
 
   RegisterRequested({
     required this.name,
@@ -22,6 +23,7 @@ class RegisterRequested extends AuthEvent {
     this.storeName,
     this.storeLocation,
     this.storeType,
+    this.phone,
   });
 }
 
