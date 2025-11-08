@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'banner_carousel.dart';
 import '../../../services/auth_service.dart';
+import '../../../services/analytics_service.dart';
 
 class GreetingHeader extends StatefulWidget {
   const GreetingHeader({super.key});
@@ -11,12 +12,16 @@ class GreetingHeader extends StatefulWidget {
 
 class _GreetingHeaderState extends State<GreetingHeader> {
   final AuthService _authService = AuthService();
+  final AnalyticsService _analyticsService = AnalyticsService();
   String _storeName = 'Your Store';
+  Map<String, dynamic>? _analyticsData;
+  bool _isLoadingAnalytics = true;
 
   @override
   void initState() {
     super.initState();
     _loadStoreName();
+    _loadAnalytics();
   }
 
   Future<void> _loadStoreName() async {
@@ -33,6 +38,26 @@ class _GreetingHeaderState extends State<GreetingHeader> {
       if (mounted) {
         setState(() {
           _storeName = 'Your Store';
+        });
+      }
+    }
+  }
+
+  Future<void> _loadAnalytics() async {
+    try {
+      final analyticsData = await _analyticsService.getCurrentStoreAnalytics();
+      if (mounted) {
+        setState(() {
+          _analyticsData = analyticsData;
+          _isLoadingAnalytics = false;
+        });
+      }
+    } catch (e) {
+      // If there's an error, set loading to false and keep null data
+      if (mounted) {
+        setState(() {
+          _analyticsData = null;
+          _isLoadingAnalytics = false;
         });
       }
     }
@@ -84,30 +109,60 @@ class _GreetingHeaderState extends State<GreetingHeader> {
   }
 
   Widget _buildMetricsCards(BuildContext context) {
+    // Use real analytics data if available, otherwise use fallback values
+    final totalRevenue = _analyticsData?['total_revenue'];
+    final totalIncome = _analyticsData?['total_income'];
+    final totalOrders = _analyticsData?['total_orders'];
+    final avgOrderValue = _analyticsData?['average_order_value'];
+
     final metrics = [
       {
         'title': 'Total Revenue',
-        'value': '\$400.73',
-        'change': '7% vs last month',
-        'isPositive': true,
+        'value': totalRevenue != null
+            ? '\$${totalRevenue['value']?.toStringAsFixed(2) ?? '0.00'}'
+            : '\$0.00',
+        'change': totalRevenue != null
+            ? '${totalRevenue['change_percent']?.toStringAsFixed(1) ?? '0.0'}% vs last week'
+            : '0.0% vs last week',
+        'isPositive': totalRevenue?['change_percent'] != null
+            ? totalRevenue['change_percent'] >= 0
+            : true,
       },
       {
         'title': 'Total Income',
-        'value': '\$300',
-        'change': '4% vs last month',
-        'isPositive': true,
+        'value': totalIncome != null
+            ? '\$${totalIncome['value']?.toStringAsFixed(2) ?? '0.00'}'
+            : '\$0.00',
+        'change': totalIncome != null
+            ? '${totalIncome['change_percent']?.toStringAsFixed(1) ?? '0.0'}% vs last week'
+            : '0.0% vs last week',
+        'isPositive': totalIncome?['change_percent'] != null
+            ? totalIncome['change_percent'] >= 0
+            : true,
       },
       {
-        'title': 'Total Order',
-        'value': '100',
-        'change': '3% vs last month',
-        'isPositive': true,
+        'title': 'Total Orders',
+        'value': totalOrders != null
+            ? '${totalOrders['value']?.toString() ?? '0'}'
+            : '0',
+        'change': totalOrders != null
+            ? '${totalOrders['change_percent']?.toStringAsFixed(1) ?? '0.0'}% vs last week'
+            : '0.0% vs last week',
+        'isPositive': totalOrders?['change_percent'] != null
+            ? totalOrders['change_percent'] >= 0
+            : true,
       },
       {
         'title': 'Avg. Order Value',
-        'value': '\$60',
-        'change': '2% vs last month',
-        'isPositive': true,
+        'value': avgOrderValue != null
+            ? '\$${avgOrderValue['value']?.toStringAsFixed(2) ?? '0.00'}'
+            : '\$0.00',
+        'change': avgOrderValue != null
+            ? '${avgOrderValue['change_percent']?.toStringAsFixed(1) ?? '0.0'}% vs last week'
+            : '0.0% vs last week',
+        'isPositive': avgOrderValue?['change_percent'] != null
+            ? avgOrderValue['change_percent'] >= 0
+            : true,
       },
     ];
 
@@ -123,6 +178,11 @@ class _GreetingHeaderState extends State<GreetingHeader> {
       itemCount: metrics.length,
       itemBuilder: (context, index) {
         final metric = metrics[index];
+
+        // Show loading state if analytics are still loading
+        if (_isLoadingAnalytics) {
+          return _buildLoadingMetricCard(context);
+        }
         return Card(
           elevation: 1,
           shape: RoundedRectangleBorder(
@@ -218,6 +278,75 @@ class _GreetingHeaderState extends State<GreetingHeader> {
           ),
         );
       },
+    );
+  }
+
+  Widget _buildLoadingMetricCard(BuildContext context) {
+    return Card(
+      elevation: 1,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(
+          color: const Color(0xFF5329C8).withOpacity(0.1),
+          width: 1,
+        ),
+      ),
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(12),
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              const Color(0xFF5329C8).withOpacity(0.02),
+              Colors.transparent,
+            ],
+          ),
+        ),
+        child: const Padding(
+          padding: EdgeInsets.all(10.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Loading shimmer for title
+              SizedBox(
+                width: 80,
+                height: 14,
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: Colors.grey,
+                    borderRadius: BorderRadius.all(Radius.circular(4)),
+                  ),
+                ),
+              ),
+              SizedBox(height: 8),
+              // Loading shimmer for value
+              SizedBox(
+                width: 60,
+                height: 20,
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: Colors.grey,
+                    borderRadius: BorderRadius.all(Radius.circular(4)),
+                  ),
+                ),
+              ),
+              SizedBox(height: 4),
+              // Loading shimmer for change
+              SizedBox(
+                width: 100,
+                height: 12,
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: Colors.grey,
+                    borderRadius: BorderRadius.all(Radius.circular(4)),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
