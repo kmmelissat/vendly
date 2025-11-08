@@ -7,9 +7,7 @@ class AnalyticsService {
   final Dio _dio;
   final AuthService _authService;
 
-  AnalyticsService()
-      : _dio = Dio(),
-        _authService = AuthService() {
+  AnalyticsService() : _dio = Dio(), _authService = AuthService() {
     _dio.options.baseUrl = ApiConstants.baseUrl;
     _dio.options.connectTimeout = ApiConstants.connectTimeout;
     _dio.options.receiveTimeout = ApiConstants.receiveTimeout;
@@ -33,10 +31,7 @@ class AnalyticsService {
           handler.next(response);
         },
         onError: (error, handler) {
-          LoggerService.apiError(
-            error.requestOptions.uri.toString(),
-            error,
-          );
+          LoggerService.apiError(error.requestOptions.uri.toString(), error);
           handler.next(error);
         },
       ),
@@ -77,10 +72,7 @@ class AnalyticsService {
         return null;
       }
     } on DioException catch (e) {
-      LoggerService.apiError(
-        'Analytics Summary API',
-        e,
-      );
+      LoggerService.apiError('Analytics Summary API', e);
 
       // Return null on error, let the UI handle fallback
       return null;
