@@ -15,7 +15,7 @@ class HomePage extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Personalized Greeting Header (includes banner and metrics)
-          GreetingHeader(),
+          const GreetingHeader(),
           SizedBox(height: 32),
 
           // Notification Items
