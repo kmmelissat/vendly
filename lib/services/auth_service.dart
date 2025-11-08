@@ -140,16 +140,34 @@ class AuthService {
           await _saveRefreshToken(data['refresh_token']);
         }
 
-        // Create a user object from the token or use username
+        // Create enhanced user object from the detailed response
+        final apiUser = data['user'] as Map<String, dynamic>? ?? {};
+        final store = apiUser['store'] as Map<String, dynamic>? ?? {};
+
         final userObject = {
-          'id':
-              email, // Using username as ID since we don't have user ID from API
-          'username': email,
+          'id': apiUser['id']?.toString() ?? email,
+          'username': apiUser['username'] ?? email,
           'name':
-              email, // Using username as name since we don't have separate name
-          'email': email, // Using username as email for compatibility
+              apiUser['username'] ?? email, // Using username as display name
+          'email': apiUser['email'] ?? email,
+          'user_type': apiUser['user_type'] ?? 'store',
+          'created_at': apiUser['created_at'],
+          'updated_at': apiUser['updated_at'],
           'token_type': data['token_type'] ?? 'bearer',
+          'store': {
+            'id': store['id']?.toString() ?? '',
+            'name': store['name'] ?? 'Your Store',
+            'store_location': store['store_location'] ?? '',
+            'type': store['type'] ?? '',
+            'phone': store['phone'] ?? '',
+            'email': store['email'],
+            'profile_image': store['profile_image'],
+            'owner_id': store['owner_id']?.toString() ?? '',
+            'created_at': store['created_at'],
+            'updated_at': store['updated_at'],
+          },
         };
+
         await _saveUserData(userObject);
 
         LoggerService.authEvent('Login success', data: {'username': email});
