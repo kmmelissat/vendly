@@ -7,6 +7,7 @@ import '../../../services/image_upload_service.dart';
 class ImageUploadWidget extends StatefulWidget {
   final List<String> initialImages;
   final Function(List<String>) onImagesChanged;
+  final Function(List<XFile>)? onImageFilesChanged; // New callback for XFile objects
   final int maxImages;
   final bool allowMultiple;
 
@@ -14,6 +15,7 @@ class ImageUploadWidget extends StatefulWidget {
     super.key,
     this.initialImages = const [],
     required this.onImagesChanged,
+    this.onImageFilesChanged,
     this.maxImages = 5,
     this.allowMultiple = true,
   });
@@ -26,6 +28,7 @@ class _ImageUploadWidgetState extends State<ImageUploadWidget> {
   final ImagePicker _picker = ImagePicker();
   final ImageUploadService _uploadService = ImageUploadService();
   List<String> _imagePaths = [];
+  List<XFile> _imageFiles = []; // Store XFile objects
   bool _isUploading = false;
   double _uploadProgress = 0.0;
   String _uploadStatus = '';
@@ -500,17 +503,16 @@ class _ImageUploadWidgetState extends State<ImageUploadWidget> {
         });
 
         try {
-          // For now, we'll add the local path directly
-          // In a real app, you would upload to server first:
-          // final uploadedUrl = await _uploadService.uploadImage(image.path);
-          
+          // Store both path and XFile object
           setState(() {
             _imagePaths.add(image.path);
+            _imageFiles.add(image);
             _uploadProgress = 1.0;
-            _uploadStatus = 'Upload complete!';
+            _uploadStatus = 'Image selected!';
           });
           
           widget.onImagesChanged(_imagePaths);
+          widget.onImageFilesChanged?.call(_imageFiles);
           
           // Clear status after a delay
           Future.delayed(const Duration(seconds: 1), () {
@@ -522,7 +524,7 @@ class _ImageUploadWidgetState extends State<ImageUploadWidget> {
             }
           });
         } catch (e) {
-          _showErrorSnackBar('Failed to upload image: $e');
+          _showErrorSnackBar('Failed to select image: $e');
         }
       }
     } catch (e) {
@@ -588,16 +590,18 @@ class _ImageUploadWidgetState extends State<ImageUploadWidget> {
           for (int i = 0; i < validImages.length; i++) {
             setState(() {
               _uploadProgress = (i + 1) / validImages.length;
-              _uploadStatus = 'Uploading ${i + 1}/${validImages.length} images...';
+              _uploadStatus = 'Selecting ${i + 1}/${validImages.length} images...';
             });
             
             _imagePaths.add(validImages[i].path);
+            _imageFiles.add(validImages[i]);
             
-            // Simulate upload delay
+            // Simulate selection delay
             await Future.delayed(const Duration(milliseconds: 200));
           }
 
           widget.onImagesChanged(_imagePaths);
+          widget.onImageFilesChanged?.call(_imageFiles);
 
           setState(() {
             _uploadProgress = 1.0;
@@ -633,16 +637,26 @@ class _ImageUploadWidgetState extends State<ImageUploadWidget> {
   void _removeImage(int index) {
     setState(() {
       _imagePaths.removeAt(index);
+      if (index < _imageFiles.length) {
+        _imageFiles.removeAt(index);
+      }
     });
     widget.onImagesChanged(_imagePaths);
+    widget.onImageFilesChanged?.call(_imageFiles);
   }
 
   void _moveToMain(int index) {
     setState(() {
       final image = _imagePaths.removeAt(index);
       _imagePaths.insert(0, image);
+      
+      if (index < _imageFiles.length) {
+        final imageFile = _imageFiles.removeAt(index);
+        _imageFiles.insert(0, imageFile);
+      }
     });
     widget.onImagesChanged(_imagePaths);
+    widget.onImageFilesChanged?.call(_imageFiles);
   }
 
   void _showErrorSnackBar(String message) {

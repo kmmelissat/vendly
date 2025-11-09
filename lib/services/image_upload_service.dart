@@ -1,6 +1,7 @@
 import 'dart:io' show File;
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:image_picker/image_picker.dart';
 import '../constants/api_constants.dart';
 import 'logger_service.dart';
 
@@ -20,184 +21,186 @@ class ImageUploadService {
     ));
   }
 
-  /// Upload a single image file
-  Future<String> uploadImage(String filePath) async {
+  /// Upload images to a product (max 10 images)
+  /// Returns a list of uploaded image URLs
+  Future<List<String>> uploadProductImages({
+    required int productId,
+    required List<XFile> imageFiles,
+    required String authToken,
+  }) async {
     try {
-      LoggerService.info('Uploading image: $filePath');
+      LoggerService.info('Uploading ${imageFiles.length} images for product $productId');
       
-      if (kIsWeb) {
-        // On web, we can't use File, so skip actual upload for now
-        // In production, you would handle web file upload differently
-        LoggerService.info('Web upload not implemented, returning path as-is');
-        return filePath;
+      if (imageFiles.isEmpty) {
+        throw ImageUploadException('No images to upload');
+      }
+      
+      if (imageFiles.length > 10) {
+        throw ImageUploadException('Maximum 10 images allowed');
       }
 
-      final file = File(filePath);
-      if (!file.existsSync()) {
-        throw ImageUploadException('File does not exist: $filePath');
+      final formData = FormData();
+      
+      // Add each image to the form data with field name 'files' as expected by API
+      for (int i = 0; i < imageFiles.length; i++) {
+        final imageFile = imageFiles[i];
+        
+        if (kIsWeb) {
+          // On web, read bytes and create MultipartFile from bytes
+          final bytes = await imageFile.readAsBytes();
+          formData.files.add(MapEntry(
+            'files',
+            MultipartFile.fromBytes(
+              bytes,
+              filename: imageFile.name,
+            ),
+          ));
+        } else {
+          // On mobile/desktop, use file path
+          formData.files.add(MapEntry(
+            'files',
+            await MultipartFile.fromFile(
+              imageFile.path,
+              filename: imageFile.name,
+            ),
+          ));
+        }
       }
 
-      final fileName = file.path.split('/').last;
-      final formData = FormData.fromMap({
-        'image': await MultipartFile.fromFile(
-          file.path,
-          filename: fileName,
-        ),
-      });
+      final endpoint = ApiConstants.uploadProductImagesEndpoint
+          .replaceAll('{productId}', productId.toString());
 
       final response = await _dio.post(
-        ApiConstants.uploadImageEndpoint,
+        endpoint,
         data: formData,
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer $authToken',
+          },
+        ),
       );
 
-      if (response.data != null && response.data['url'] != null) {
-        final imageUrl = response.data['url'] as String;
-        LoggerService.info('Successfully uploaded image: $imageUrl');
-        return imageUrl;
+      if (response.data != null) {
+        // Assuming the API returns a list of image URLs or objects
+        final List<String> uploadedUrls = [];
+        
+        if (response.data is List) {
+          for (var item in response.data) {
+            if (item is String) {
+              uploadedUrls.add(item);
+            } else if (item is Map && item['url'] != null) {
+              uploadedUrls.add(item['url'] as String);
+            } else if (item is Map && item['image'] != null) {
+              uploadedUrls.add(item['image'] as String);
+            }
+          }
+        } else if (response.data is Map && response.data['images'] != null) {
+          final images = response.data['images'] as List;
+          for (var item in images) {
+            if (item is String) {
+              uploadedUrls.add(item);
+            } else if (item is Map && item['url'] != null) {
+              uploadedUrls.add(item['url'] as String);
+            } else if (item is Map && item['image'] != null) {
+              uploadedUrls.add(item['image'] as String);
+            }
+          }
+        }
+        
+        LoggerService.info('Successfully uploaded ${uploadedUrls.length} images');
+        return uploadedUrls;
       } else {
         throw ImageUploadException('Invalid response format');
       }
     } on DioException catch (e) {
-      LoggerService.error('Dio error uploading image: ${e.message}');
+      LoggerService.error('Dio error uploading images: ${e.message}');
       throw ImageUploadException(
-        'Failed to upload image: ${e.message}',
+        'Failed to upload images: ${e.message}',
         e.response?.statusCode ?? 0,
       );
     } catch (e) {
-      LoggerService.error('Error uploading image: $e');
+      LoggerService.error('Error uploading images: $e');
       throw ImageUploadException('Upload error: $e');
     }
   }
 
-  /// Upload multiple images
-  Future<List<String>> uploadImages(List<String> filePaths) async {
+
+  /// Get all images for a product
+  Future<List<String>> getProductImages(int productId) async {
     try {
-      LoggerService.info('Uploading ${filePaths.length} images');
+      LoggerService.info('Fetching images for product $productId');
       
-      final List<String> uploadedUrls = [];
-      
-      for (int i = 0; i < filePaths.length; i++) {
-        final filePath = filePaths[i];
-        LoggerService.info('Uploading image ${i + 1}/${filePaths.length}: $filePath');
+      final endpoint = ApiConstants.getProductImagesEndpoint
+          .replaceAll('{productId}', productId.toString());
+
+      final response = await _dio.get(endpoint);
+
+      if (response.data != null) {
+        final List<String> imageUrls = [];
         
-        try {
-          final url = await uploadImage(filePath);
-          uploadedUrls.add(url);
-        } catch (e) {
-          LoggerService.error('Failed to upload image $filePath: $e');
-          // Continue with other images, but log the failure
-          // You might want to throw here if you want all-or-nothing behavior
-        }
-      }
-      
-      LoggerService.info('Successfully uploaded ${uploadedUrls.length}/${filePaths.length} images');
-      return uploadedUrls;
-    } catch (e) {
-      LoggerService.error('Error uploading multiple images: $e');
-      throw ImageUploadException('Batch upload error: $e');
-    }
-  }
-
-  /// Upload images with progress callback
-  Future<List<String>> uploadImagesWithProgress(
-    List<String> filePaths,
-    Function(int current, int total, double progress)? onProgress,
-  ) async {
-    try {
-      LoggerService.info('Uploading ${filePaths.length} images with progress tracking');
-      
-      final List<String> uploadedUrls = [];
-      
-      for (int i = 0; i < filePaths.length; i++) {
-        final filePath = filePaths[i];
-        
-        try {
-          // Report progress at start of each upload
-          onProgress?.call(i, filePaths.length, i / filePaths.length);
-          
-          final url = await _uploadImageWithProgress(filePath, (progress) {
-            // Calculate overall progress
-            final overallProgress = (i + progress) / filePaths.length;
-            onProgress?.call(i + 1, filePaths.length, overallProgress);
-          });
-          
-          uploadedUrls.add(url);
-        } catch (e) {
-          LoggerService.error('Failed to upload image $filePath: $e');
-          // Continue with other images
-        }
-      }
-      
-      // Report completion
-      onProgress?.call(filePaths.length, filePaths.length, 1.0);
-      
-      LoggerService.info('Completed upload with progress: ${uploadedUrls.length}/${filePaths.length} images');
-      return uploadedUrls;
-    } catch (e) {
-      LoggerService.error('Error uploading images with progress: $e');
-      throw ImageUploadException('Progress upload error: $e');
-    }
-  }
-
-  Future<String> _uploadImageWithProgress(
-    String filePath,
-    Function(double progress)? onProgress,
-  ) async {
-    try {
-      if (kIsWeb) {
-        // On web, simulate progress and return path
-        onProgress?.call(1.0);
-        return filePath;
-      }
-
-      final file = File(filePath);
-      if (!file.existsSync()) {
-        throw ImageUploadException('File does not exist: $filePath');
-      }
-
-      final fileName = file.path.split('/').last;
-      final formData = FormData.fromMap({
-        'image': await MultipartFile.fromFile(
-          file.path,
-          filename: fileName,
-        ),
-      });
-
-      final response = await _dio.post(
-        ApiConstants.uploadImageEndpoint,
-        data: formData,
-        onSendProgress: (sent, total) {
-          if (total > 0) {
-            final progress = sent / total;
-            onProgress?.call(progress);
+        if (response.data is List) {
+          for (var item in response.data) {
+            if (item is String) {
+              imageUrls.add(item);
+            } else if (item is Map && item['url'] != null) {
+              imageUrls.add(item['url'] as String);
+            } else if (item is Map && item['image'] != null) {
+              imageUrls.add(item['image'] as String);
+            }
           }
-        },
-      );
-
-      if (response.data != null && response.data['url'] != null) {
-        return response.data['url'] as String;
+        } else if (response.data is Map && response.data['images'] != null) {
+          final images = response.data['images'] as List;
+          for (var item in images) {
+            if (item is String) {
+              imageUrls.add(item);
+            } else if (item is Map && item['url'] != null) {
+              imageUrls.add(item['url'] as String);
+            } else if (item is Map && item['image'] != null) {
+              imageUrls.add(item['image'] as String);
+            }
+          }
+        }
+        
+        LoggerService.info('Found ${imageUrls.length} images for product $productId');
+        return imageUrls;
       } else {
-        throw ImageUploadException('Invalid response format');
+        return [];
       }
+    } on DioException catch (e) {
+      LoggerService.error('Dio error fetching product images: ${e.message}');
+      throw ImageUploadException(
+        'Failed to fetch product images: ${e.message}',
+        e.response?.statusCode ?? 0,
+      );
     } catch (e) {
-      if (e is ImageUploadException) rethrow;
-      throw ImageUploadException('Upload error: $e');
+      LoggerService.error('Error fetching product images: $e');
+      throw ImageUploadException('Fetch error: $e');
     }
   }
 
-  /// Delete an uploaded image
-  Future<void> deleteImage(String imageUrl) async {
+  /// Delete a specific image from a product
+  Future<void> deleteProductImage({
+    required int productId,
+    required int imageId,
+    required String authToken,
+  }) async {
     try {
-      LoggerService.info('Deleting image: $imageUrl');
+      LoggerService.info('Deleting image $imageId from product $productId');
       
-      // Extract image ID or path from URL if needed
-      // This depends on your API structure
+      final endpoint = ApiConstants.deleteProductImageEndpoint
+          .replaceAll('{productId}', productId.toString())
+          .replaceAll('{imageId}', imageId.toString());
+
       await _dio.delete(
-        '/images', // Adjust endpoint as needed
-        data: {'url': imageUrl},
+        endpoint,
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer $authToken',
+          },
+        ),
       );
 
-      LoggerService.info('Successfully deleted image: $imageUrl');
+      LoggerService.info('Successfully deleted image $imageId from product $productId');
     } on DioException catch (e) {
       LoggerService.error('Dio error deleting image: ${e.message}');
       throw ImageUploadException(

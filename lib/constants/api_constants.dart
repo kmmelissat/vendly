@@ -37,6 +37,11 @@ class ApiConstants {
   // Category Endpoints
   static const String categoriesEndpoint = '/categories';
   
+  // Product Image Endpoints
+  static const String uploadProductImagesEndpoint = '/products/{productId}/images';
+  static const String getProductImagesEndpoint = '/products/{productId}/images';
+  static const String deleteProductImageEndpoint = '/products/{productId}/images/{imageId}';
+  
   // Order Endpoints
   static const String ordersEndpoint = '/orders';
   static const String orderDetailsEndpoint = '/orders/{id}';

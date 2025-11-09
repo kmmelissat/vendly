@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'image_upload_widget.dart';
 import '../../../services/products_service.dart';
 import '../../../services/auth_service.dart';
+import '../../../services/image_upload_service.dart';
 import '../../../models/category.dart';
 
 class AddProductForm extends StatefulWidget {
@@ -45,9 +47,11 @@ class _AddProductFormState extends State<AddProductForm> {
   bool inStock = true;
   String? selectedImagePath;
   List<String> uploadedImages = [];
+  List<XFile> selectedImageFiles = []; // Store XFile objects for upload
   
   final ProductsService _productsService = ProductsService();
   final AuthService _authService = AuthService();
+  final ImageUploadService _imageUploadService = ImageUploadService();
   bool _isSaving = false;
   bool _isLoadingCategories = true;
   
@@ -224,7 +228,12 @@ class _AddProductFormState extends State<AddProductForm> {
                     selectedImagePath = images.isNotEmpty ? images.first : null;
                   });
                 },
-                maxImages: 5,
+                onImageFilesChanged: (imageFiles) {
+                  setState(() {
+                    selectedImageFiles = imageFiles;
+                  });
+                },
+                maxImages: 10, // API supports max 10 images
                 allowMultiple: true,
               ),
               const SizedBox(height: 16),
@@ -1088,8 +1097,8 @@ class _AddProductFormState extends State<AddProductForm> {
         // Prepare product data for API
         final productData = {
           'name': _nameController.text,
-          'description': _descriptionController.text,
-          'detailedDescription': _detailedDescriptionController.text.isNotEmpty
+          'short_description': _descriptionController.text,
+          'long_description': _detailedDescriptionController.text.isNotEmpty
               ? _detailedDescriptionController.text
               : _descriptionController.text,
           'price': double.tryParse(_priceController.text) ?? 0.0,
@@ -1100,34 +1109,20 @@ class _AddProductFormState extends State<AddProductForm> {
               ? double.tryParse(_discountPriceController.text)
               : null,
           'discount_end_date': null, // Could add a date picker for this
-          'stockQuantity': _stockController.text.isNotEmpty
+          'stock': _stockController.text.isNotEmpty
               ? int.tryParse(_stockController.text) ?? 0
               : 0,
-          'inStock': inStock,
+          'is_active': inStock,
           'store_id': storeId ?? 7, // Use fetched store ID or fallback
           'category_id': selectedCategoryId ?? 1, // Use selected category ID or fallback
           'tag_ids': [], // Could add tag selection
-          'images': uploadedImages,
-          // Additional fields for local use
-          'brand': _brandController.text,
-          'sku': _skuController.text,
-          'category': selectedCategory,
-          'dimensions': _dimensionsController.text,
-          'weight': _weightController.text,
-          'material': _materialController.text,
-          'ageRange': _ageRangeController.text,
-          'origin': _originController.text,
-          'tags': _tagsController.text.isNotEmpty
-              ? _tagsController.text.split(',').map((e) => e.trim()).toList()
-              : <String>[],
-          'features': _featuresController.text.isNotEmpty
-              ? _featuresController.text.split(',').map((e) => e.trim()).toList()
-              : <String>[],
         };
 
+        int? productId;
+        
         if (widget.isEditing) {
           // Update existing product
-          final productId = int.tryParse(widget.existingProduct!['id'].toString());
+          productId = int.tryParse(widget.existingProduct!['id'].toString());
           if (productId != null) {
             await _productsService.updateProduct(productId, productData, token);
             
@@ -1142,7 +1137,10 @@ class _AddProductFormState extends State<AddProductForm> {
           }
         } else {
           // Create new product
-          await _productsService.createProduct(productData, token);
+          final createdProduct = await _productsService.createProduct(productData, token);
+          
+          // Get product ID from created product
+          productId = createdProduct.id;
           
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
@@ -1151,6 +1149,45 @@ class _AddProductFormState extends State<AddProductForm> {
                 backgroundColor: Colors.green,
               ),
             );
+          }
+        }
+
+        // Upload images if there are any and we have a product ID
+        if (productId != null && selectedImageFiles.isNotEmpty) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Uploading images...'),
+                duration: Duration(seconds: 2),
+              ),
+            );
+          }
+          
+          try {
+            final imageUrls = await _imageUploadService.uploadProductImages(
+              productId: productId,
+              imageFiles: selectedImageFiles,
+              authToken: token,
+            );
+            
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('${imageUrls.length} images uploaded successfully!'),
+                  backgroundColor: Colors.green,
+                ),
+              );
+            }
+          } catch (e) {
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Product saved but image upload failed: ${e.toString()}'),
+                  backgroundColor: Colors.orange,
+                  duration: const Duration(seconds: 4),
+                ),
+              );
+            }
           }
         }
 
