@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'add_product_form.dart';
 
 class ProductDetailsModal extends StatelessWidget {
   final Map<String, dynamic> product;
@@ -69,25 +70,72 @@ class ProductDetailsModal extends StatelessWidget {
   }
 
   Widget _buildProductImage(BuildContext context) {
+    final imagePath = product['image'];
+    final isNetworkImage = imagePath != null && 
+        (imagePath.toString().startsWith('http://') || 
+         imagePath.toString().startsWith('https://'));
+    
     return ClipRRect(
       borderRadius: BorderRadius.circular(20),
-      child: Image.asset(
-        product['image'],
-        fit: BoxFit.cover,
-        height: 250,
-        width: double.infinity,
-        errorBuilder: (context, error, stackTrace) {
-          return Container(
-            height: 250,
-            color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
-            child: Icon(
-              Icons.image_not_supported,
-              color: Theme.of(context).colorScheme.primary,
-              size: 60,
-            ),
-          );
-        },
-      ),
+      child: imagePath == null || imagePath.toString().isEmpty
+          ? Container(
+              height: 250,
+              color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+              child: Icon(
+                Icons.inventory_2,
+                color: Theme.of(context).colorScheme.primary,
+                size: 60,
+              ),
+            )
+          : isNetworkImage
+              ? Image.network(
+                  imagePath,
+                  fit: BoxFit.cover,
+                  height: 250,
+                  width: double.infinity,
+                  errorBuilder: (context, error, stackTrace) {
+                    return Container(
+                      height: 250,
+                      color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                      child: Icon(
+                        Icons.image_not_supported,
+                        color: Theme.of(context).colorScheme.primary,
+                        size: 60,
+                      ),
+                    );
+                  },
+                  loadingBuilder: (context, child, loadingProgress) {
+                    if (loadingProgress == null) return child;
+                    return Container(
+                      height: 250,
+                      child: Center(
+                        child: CircularProgressIndicator(
+                          value: loadingProgress.expectedTotalBytes != null
+                              ? loadingProgress.cumulativeBytesLoaded /
+                                  loadingProgress.expectedTotalBytes!
+                              : null,
+                        ),
+                      ),
+                    );
+                  },
+                )
+              : Image.asset(
+                  imagePath,
+                  fit: BoxFit.cover,
+                  height: 250,
+                  width: double.infinity,
+                  errorBuilder: (context, error, stackTrace) {
+                    return Container(
+                      height: 250,
+                      color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                      child: Icon(
+                        Icons.image_not_supported,
+                        color: Theme.of(context).colorScheme.primary,
+                        size: 60,
+                      ),
+                    );
+                  },
+                ),
     );
   }
 
@@ -471,12 +519,7 @@ class ProductDetailsModal extends StatelessWidget {
               child: ElevatedButton.icon(
                 onPressed: () {
                   Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Opening edit form for ${product['name']}'),
-                      duration: const Duration(seconds: 2),
-                    ),
-                  );
+                  _showEditProductForm(context, product);
                 },
                 icon: const Icon(Icons.edit, size: 18),
                 label: const Text('Edit Product'),
@@ -493,6 +536,48 @@ class ProductDetailsModal extends StatelessWidget {
           ],
         ),
       ],
+    );
+  }
+
+  void _showEditProductForm(BuildContext context, Map<String, dynamic> product) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        return DraggableScrollableSheet(
+          initialChildSize: 0.9,
+          minChildSize: 0.5,
+          maxChildSize: 0.95,
+          expand: false,
+          builder: (_, controller) {
+            return Container(
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.surface,
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(20),
+                ),
+              ),
+              child: AddProductForm(
+                scrollController: controller,
+                existingProduct: product,
+                isEditing: true,
+                onProductAdded: (updatedProduct) {
+                  // Handle the updated product
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('${updatedProduct['name']} updated successfully!'),
+                      backgroundColor: Colors.green,
+                      duration: const Duration(seconds: 2),
+                    ),
+                  );
+                  // You might want to refresh the products list here
+                },
+              ),
+            );
+          },
+        );
+      },
     );
   }
 }

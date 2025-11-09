@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import '../constants/api_constants.dart';
 import '../models/product.dart';
+import '../models/category.dart';
 import 'logger_service.dart';
 
 class ProductsService {
@@ -58,13 +59,38 @@ class ProductsService {
   }
 
   /// Creates a new product
-  Future<Product> createProduct(Map<String, dynamic> productData) async {
+  /// Requires authentication token
+  Future<Product> createProduct(
+    Map<String, dynamic> productData,
+    String authToken,
+  ) async {
     try {
       LoggerService.info('Creating new product');
       
+      // Format data according to API requirements
+      final apiData = {
+        'name': productData['name'],
+        'short_description': productData['description'] ?? productData['short_description'],
+        'long_description': productData['detailedDescription'] ?? productData['long_description'],
+        'price': productData['price'],
+        'production_cost': productData['production_cost'] ?? 0,
+        'discount_price': productData['discount_price'],
+        'discount_end_date': productData['discount_end_date'],
+        'stock': productData['stockQuantity'] ?? productData['stock'] ?? 0,
+        'is_active': productData['inStock'] ?? productData['is_active'] ?? true,
+        'store_id': productData['store_id'],
+        'category_id': productData['category_id'],
+        'tag_ids': productData['tag_ids'] ?? [],
+      };
+      
       final response = await _dio.post(
         ApiConstants.createProductEndpoint,
-        data: productData,
+        data: apiData,
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer $authToken',
+          },
+        ),
       );
 
       final product = Product.fromJson(response.data);
@@ -72,6 +98,9 @@ class ProductsService {
       return product;
     } on DioException catch (e) {
       LoggerService.error('Dio error creating product: ${e.message}');
+      if (e.response?.statusCode == 401) {
+        throw ProductsServiceException('Unauthorized: Please log in again', 401);
+      }
       throw ProductsServiceException(
         'Failed to create product: ${e.message}',
         e.response?.statusCode ?? 0,
@@ -83,7 +112,13 @@ class ProductsService {
   }
 
   /// Updates an existing product
-  Future<Product> updateProduct(int productId, Map<String, dynamic> productData) async {
+  /// Requires authentication token
+  /// Note: store_id is NOT included in update (per API spec)
+  Future<Product> updateProduct(
+    int productId,
+    Map<String, dynamic> productData,
+    String authToken,
+  ) async {
     try {
       LoggerService.info('Updating product ID: $productId');
       
@@ -93,9 +128,29 @@ class ProductsService {
         productId.toString(),
       );
       
+      // Format data according to API requirements (no store_id in update)
+      final apiData = {
+        'name': productData['name'],
+        'short_description': productData['description'] ?? productData['short_description'],
+        'long_description': productData['detailedDescription'] ?? productData['long_description'],
+        'price': productData['price'],
+        'production_cost': productData['production_cost'] ?? 0,
+        'discount_price': productData['discount_price'],
+        'discount_end_date': productData['discount_end_date'],
+        'stock': productData['stockQuantity'] ?? productData['stock'] ?? 0,
+        'is_active': productData['inStock'] ?? productData['is_active'] ?? true,
+        'category_id': productData['category_id'],
+        'tag_ids': productData['tag_ids'] ?? [],
+      };
+      
       final response = await _dio.put(
         endpoint,
-        data: productData,
+        data: apiData,
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer $authToken',
+          },
+        ),
       );
 
       final product = Product.fromJson(response.data);
@@ -103,6 +158,9 @@ class ProductsService {
       return product;
     } on DioException catch (e) {
       LoggerService.error('Dio error updating product: ${e.message}');
+      if (e.response?.statusCode == 401) {
+        throw ProductsServiceException('Unauthorized: Please log in again', 401);
+      }
       throw ProductsServiceException(
         'Failed to update product: ${e.message}',
         e.response?.statusCode ?? 0,
@@ -162,6 +220,36 @@ class ProductsService {
       );
     } catch (e) {
       LoggerService.error('Error fetching product: $e');
+      throw ProductsServiceException('Network error: $e', 0);
+    }
+  }
+
+  /// Fetches all categories
+  Future<List<Category>> getCategories() async {
+    try {
+      LoggerService.info('Fetching categories');
+      
+      final response = await _dio.get(ApiConstants.categoriesEndpoint);
+
+      LoggerService.debug('Response status code: ${response.statusCode}');
+      LoggerService.debug('Response data length: ${response.data?.length ?? 0}');
+
+      final List<dynamic> jsonData = response.data as List<dynamic>;
+      final categories = jsonData
+          .map((categoryJson) => Category.fromJson(categoryJson))
+          .toList();
+      
+      LoggerService.info('Successfully fetched ${categories.length} categories');
+      return categories;
+    } on DioException catch (e) {
+      LoggerService.error('Dio error fetching categories: ${e.message}');
+      LoggerService.error('Status code: ${e.response?.statusCode}');
+      throw ProductsServiceException(
+        'Failed to fetch categories: ${e.message}',
+        e.response?.statusCode ?? 0,
+      );
+    } catch (e) {
+      LoggerService.error('Error fetching categories: $e');
       throw ProductsServiceException('Network error: $e', 0);
     }
   }

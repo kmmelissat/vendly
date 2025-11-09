@@ -300,14 +300,8 @@ class _ProductCardsViewState extends State<ProductCardsView> {
             ),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(16),
-              child: product['image'] != null
-                  ? Image.asset(
-                      product['image'],
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) {
-                        return _buildImagePlaceholder();
-                      },
-                    )
+              child: product['image'] != null && product['image'].toString().isNotEmpty
+                  ? _buildProductImage(product['image'])
                   : _buildImagePlaceholder(),
             ),
           ),
@@ -457,14 +451,8 @@ class _ProductCardsViewState extends State<ProductCardsView> {
           ),
           child: ClipRRect(
             borderRadius: BorderRadius.circular(16),
-            child: product['image'] != null
-                ? Image.asset(
-                    product['image'],
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) {
-                      return _buildImagePlaceholder();
-                    },
-                  )
+            child: product['image'] != null && product['image'].toString().isNotEmpty
+                ? _buildProductImage(product['image'])
                 : _buildImagePlaceholder(),
           ),
         ),
@@ -576,6 +564,39 @@ class _ProductCardsViewState extends State<ProductCardsView> {
           ],
         ),
       ],
+    );
+  }
+
+  Widget _buildProductImage(String imagePath) {
+    // Check if it's a network URL
+    if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
+      return Image.network(
+        imagePath,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) {
+          return _buildImagePlaceholder();
+        },
+        loadingBuilder: (context, child, loadingProgress) {
+          if (loadingProgress == null) return child;
+          return Center(
+            child: CircularProgressIndicator(
+              value: loadingProgress.expectedTotalBytes != null
+                  ? loadingProgress.cumulativeBytesLoaded /
+                      loadingProgress.expectedTotalBytes!
+                  : null,
+            ),
+          );
+        },
+      );
+    }
+    
+    // Otherwise treat as asset
+    return Image.asset(
+      imagePath,
+      fit: BoxFit.cover,
+      errorBuilder: (context, error, stackTrace) {
+        return _buildImagePlaceholder();
+      },
     );
   }
 

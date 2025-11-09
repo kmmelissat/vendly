@@ -1,13 +1,21 @@
 import 'package:flutter/material.dart';
+import 'image_upload_widget.dart';
+import '../../../services/products_service.dart';
+import '../../../services/auth_service.dart';
+import '../../../models/category.dart';
 
 class AddProductForm extends StatefulWidget {
   final ScrollController scrollController;
   final Function(Map<String, dynamic>) onProductAdded;
+  final Map<String, dynamic>? existingProduct; // For editing
+  final bool isEditing;
 
   const AddProductForm({
     super.key,
     required this.scrollController,
     required this.onProductAdded,
+    this.existingProduct,
+    this.isEditing = false,
   });
 
   @override
@@ -20,7 +28,8 @@ class _AddProductFormState extends State<AddProductForm> {
   final _brandController = TextEditingController();
   final _skuController = TextEditingController();
   final _priceController = TextEditingController();
-  final _originalPriceController = TextEditingController();
+  final _productionCostController = TextEditingController();
+  final _discountPriceController = TextEditingController();
   final _descriptionController = TextEditingController();
   final _detailedDescriptionController = TextEditingController();
   final _stockController = TextEditingController();
@@ -35,8 +44,20 @@ class _AddProductFormState extends State<AddProductForm> {
   String selectedCategory = 'Labubu';
   bool inStock = true;
   String? selectedImagePath;
-
-  final List<String> categories = [
+  List<String> uploadedImages = [];
+  
+  final ProductsService _productsService = ProductsService();
+  final AuthService _authService = AuthService();
+  bool _isSaving = false;
+  bool _isLoadingCategories = true;
+  
+  // API-related fields
+  int? storeId; // Will be fetched from user session
+  int? selectedCategoryId; // Selected category ID from API
+  List<Category> apiCategories = [];
+  
+  // Fallback categories if API fails
+  final List<String> fallbackCategories = [
     'Labubu',
     'Plush',
     'Sonny Angel',
@@ -44,20 +65,95 @@ class _AddProductFormState extends State<AddProductForm> {
     'Others',
   ];
 
-  final List<String> availableImages = [
-    'assets/images/products/labubu1.jpg',
-    'assets/images/products/labubu2.jpg',
-    'assets/images/products/labubu3.jpg',
-    'assets/images/products/sonnyangel1.jpg',
-    'assets/images/products/plush1.jpg',
-    'assets/images/products/cinamonroll1.jpg',
-    'assets/images/products/gummybearplush1.jpg',
-    'assets/images/products/mokoko.jpg',
-    'assets/images/products/ternuritos1.jpg',
-    'assets/images/products/ternuritos2.jpg',
-    'assets/images/products/ternuritos3.jpg',
-    'assets/images/products/wildcutieplush.jpg',
-  ];
+
+  @override
+  void initState() {
+    super.initState();
+    _initializeForm();
+  }
+
+  Future<void> _initializeForm() async {
+    // Fetch store ID from user session
+    try {
+      final userData = await _authService.getUserData();
+      if (userData != null && userData['store_id'] != null) {
+        storeId = userData['store_id'] as int;
+      } else {
+        storeId = 7; // Fallback to default
+      }
+    } catch (e) {
+      storeId = 7; // Fallback on error
+    }
+
+    // Fetch categories from API
+    try {
+      final categories = await _productsService.getCategories();
+      if (mounted) {
+        setState(() {
+          apiCategories = categories;
+          _isLoadingCategories = false;
+          if (categories.isNotEmpty && selectedCategoryId == null) {
+            selectedCategoryId = categories.first.id;
+          }
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoadingCategories = false;
+        });
+      }
+    }
+
+    // Populate form if editing
+    if (widget.isEditing && widget.existingProduct != null) {
+      _populateFormWithExistingData();
+    }
+  }
+
+  void _populateFormWithExistingData() {
+    final product = widget.existingProduct!;
+    _nameController.text = product['name'] ?? '';
+    _brandController.text = product['brand'] ?? '';
+    _skuController.text = product['sku'] ?? '';
+    _priceController.text = (product['price'] ?? 0.0).toString();
+    _productionCostController.text = (product['production_cost'] ?? 0.0).toString();
+    _discountPriceController.text = product['discount_price']?.toString() ?? '';
+    _descriptionController.text = product['description'] ?? '';
+    _detailedDescriptionController.text = product['detailedDescription'] ?? '';
+    _stockController.text = (product['stockQuantity'] ?? 0).toString();
+    _dimensionsController.text = product['dimensions'] ?? '';
+    _weightController.text = product['weight'] ?? '';
+    _materialController.text = product['material'] ?? '';
+    _ageRangeController.text = product['ageRange'] ?? '';
+    _originController.text = product['origin'] ?? '';
+    
+    // Handle features and tags
+    if (product['features'] is List) {
+      _featuresController.text = (product['features'] as List).join(', ');
+    }
+    if (product['tags'] is List) {
+      _tagsController.text = (product['tags'] as List).join(', ');
+    }
+    
+    // Set other properties
+    final productCategory = product['category'] ?? 'Labubu';
+    selectedCategory = fallbackCategories.contains(productCategory) ? productCategory : 'Others';
+    inStock = product['inStock'] ?? true;
+    selectedImagePath = product['image'];
+    
+    // Set category ID if available
+    if (product['category_id'] != null) {
+      selectedCategoryId = product['category_id'] as int;
+    }
+    
+    // Handle images - convert single image to list if needed
+    if (product['images'] is List && (product['images'] as List).isNotEmpty) {
+      uploadedImages = List<String>.from(product['images']);
+    } else if (product['image'] != null && (product['image'] as String).isNotEmpty) {
+      uploadedImages = [product['image']];
+    }
+  }
 
   @override
   void dispose() {
@@ -65,7 +161,8 @@ class _AddProductFormState extends State<AddProductForm> {
     _brandController.dispose();
     _skuController.dispose();
     _priceController.dispose();
-    _originalPriceController.dispose();
+    _productionCostController.dispose();
+    _discountPriceController.dispose();
     _descriptionController.dispose();
     _detailedDescriptionController.dispose();
     _stockController.dispose();
@@ -110,15 +207,26 @@ class _AddProductFormState extends State<AddProductForm> {
 
               // Title
               Text(
-                'Add New Product',
+                widget.isEditing ? 'Edit Product' : 'Add New Product',
                 style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                   fontWeight: FontWeight.bold,
                 ),
               ),
               const SizedBox(height: 24),
 
-              // Image Selection
-              _buildImageSelection(),
+              // Image Upload
+              ImageUploadWidget(
+                initialImages: uploadedImages,
+                onImagesChanged: (images) {
+                  setState(() {
+                    uploadedImages = images;
+                    // Update selectedImagePath for backward compatibility
+                    selectedImagePath = images.isNotEmpty ? images.first : null;
+                  });
+                },
+                maxImages: 5,
+                allowMultiple: true,
+              ),
               const SizedBox(height: 16),
 
               // Basic Information
@@ -155,65 +263,6 @@ class _AddProductFormState extends State<AddProductForm> {
     );
   }
 
-  Widget _buildImageSelection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Product Image',
-          style: Theme.of(
-            context,
-          ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
-        ),
-        const SizedBox(height: 8),
-        SizedBox(
-          height: 120,
-          child: ListView.builder(
-            scrollDirection: Axis.horizontal,
-            itemCount: availableImages.length,
-            itemBuilder: (context, index) {
-              final imagePath = availableImages[index];
-              final isSelected = selectedImagePath == imagePath;
-
-              return GestureDetector(
-                onTap: () {
-                  setState(() {
-                    selectedImagePath = imagePath;
-                  });
-                },
-                child: Container(
-                  width: 100,
-                  margin: const EdgeInsets.only(right: 12),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: isSelected
-                          ? const Color(0xFF5329C8)
-                          : Theme.of(context).dividerColor,
-                      width: isSelected ? 3 : 1,
-                    ),
-                  ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(12),
-                    child: Image.asset(
-                      imagePath,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) {
-                        return Container(
-                          color: Theme.of(context).colorScheme.surface,
-                          child: const Icon(Icons.image_not_supported),
-                        );
-                      },
-                    ),
-                  ),
-                ),
-              );
-            },
-          ),
-        ),
-      ],
-    );
-  }
 
   Widget _buildBasicInformation() {
     return Column(
@@ -346,47 +395,102 @@ class _AddProductFormState extends State<AddProductForm> {
           ],
         ),
         const SizedBox(height: 12),
-        DropdownButtonFormField<String>(
-          value: selectedCategory,
-          decoration: InputDecoration(
-            labelText: 'Category *',
-            prefixIcon: const Icon(Icons.category_outlined),
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: Color(0xFF5329C8), width: 2),
-            ),
-            filled: true,
-            fillColor: Theme.of(context).colorScheme.surface,
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 16,
-            ),
-          ),
-          items: categories.map((category) {
-            return DropdownMenuItem(
-              value: category,
-              child: Row(
-                children: [
-                  _getCategoryIcon(category),
-                  const SizedBox(width: 8),
-                  Text(category),
-                ],
-              ),
-            );
-          }).toList(),
-          onChanged: (value) {
-            setState(() {
-              selectedCategory = value!;
-            });
-          },
-          validator: (value) {
-            if (value == null || value.isEmpty) {
-              return 'Select a category';
-            }
-            return null;
-          },
-        ),
+        _isLoadingCategories
+            ? Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  border: Border.all(color: Theme.of(context).dividerColor),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  children: [
+                    SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                    const SizedBox(width: 12),
+                    Text('Loading categories...'),
+                  ],
+                ),
+              )
+            : apiCategories.isNotEmpty
+                ? DropdownButtonFormField<int>(
+                    value: selectedCategoryId,
+                    decoration: InputDecoration(
+                      labelText: 'Category *',
+                      prefixIcon: const Icon(Icons.category_outlined),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: Color(0xFF5329C8), width: 2),
+                      ),
+                      filled: true,
+                      fillColor: Theme.of(context).colorScheme.surface,
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 16,
+                      ),
+                    ),
+                    items: apiCategories.map((category) {
+                      return DropdownMenuItem<int>(
+                        value: category.id,
+                        child: Text(category.name),
+                      );
+                    }).toList(),
+                    onChanged: (value) {
+                      setState(() {
+                        selectedCategoryId = value;
+                      });
+                    },
+                    validator: (value) {
+                      if (value == null) {
+                        return 'Select a category';
+                      }
+                      return null;
+                    },
+                  )
+                : DropdownButtonFormField<String>(
+                    value: selectedCategory,
+                    decoration: InputDecoration(
+                      labelText: 'Category * (Fallback)',
+                      prefixIcon: const Icon(Icons.category_outlined),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: Color(0xFF5329C8), width: 2),
+                      ),
+                      filled: true,
+                      fillColor: Theme.of(context).colorScheme.surface,
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 16,
+                      ),
+                    ),
+                    items: fallbackCategories.map((category) {
+                      return DropdownMenuItem(
+                        value: category,
+                        child: Row(
+                          children: [
+                            _getCategoryIcon(category),
+                            const SizedBox(width: 8),
+                            Text(category),
+                          ],
+                        ),
+                      );
+                    }).toList(),
+                    onChanged: (value) {
+                      setState(() {
+                        selectedCategory = value!;
+                      });
+                    },
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Select a category';
+                      }
+                      return null;
+                    },
+                  ),
       ],
     );
   }
@@ -402,13 +506,14 @@ class _AddProductFormState extends State<AddProductForm> {
           ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
         ),
         const SizedBox(height: 8),
+        // Regular Price and Production Cost
         Row(
           children: [
             Expanded(
               child: TextFormField(
                 controller: _priceController,
                 decoration: InputDecoration(
-                  labelText: 'Current Price *',
+                  labelText: 'Regular Price *',
                   hintText: '25.00',
                   prefixIcon: const Icon(Icons.attach_money_outlined),
                   prefixText: '\$',
@@ -454,11 +559,11 @@ class _AddProductFormState extends State<AddProductForm> {
             const SizedBox(width: 12),
             Expanded(
               child: TextFormField(
-                controller: _originalPriceController,
+                controller: _productionCostController,
                 decoration: InputDecoration(
-                  labelText: 'Original Price',
-                  hintText: '30.00',
-                  prefixIcon: const Icon(Icons.local_offer_outlined),
+                  labelText: 'Production Cost',
+                  hintText: '15.00',
+                  prefixIcon: const Icon(Icons.precision_manufacturing_outlined),
                   prefixText: '\$',
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -482,13 +587,12 @@ class _AddProductFormState extends State<AddProductForm> {
                 ),
                 validator: (value) {
                   if (value != null && value.isNotEmpty) {
-                    final originalPrice = double.tryParse(value);
-                    final currentPrice = double.tryParse(_priceController.text);
-                    if (originalPrice == null) {
-                      return 'Invalid price';
+                    final cost = double.tryParse(value);
+                    if (cost == null) {
+                      return 'Invalid cost';
                     }
-                    if (currentPrice != null && originalPrice <= currentPrice) {
-                      return 'Must be greater than current price';
+                    if (cost < 0) {
+                      return 'Cannot be negative';
                     }
                   }
                   return null;
@@ -496,6 +600,53 @@ class _AddProductFormState extends State<AddProductForm> {
               ),
             ),
           ],
+        ),
+        const SizedBox(height: 12),
+        // Discount Price
+        TextFormField(
+          controller: _discountPriceController,
+          decoration: InputDecoration(
+            labelText: 'Discount Price (Optional)',
+            hintText: '19.99',
+            prefixIcon: const Icon(Icons.local_offer_outlined),
+            prefixText: '\$',
+            helperText: 'Leave empty if no discount',
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(
+                color: Color(0xFF5329C8),
+                width: 2,
+              ),
+            ),
+            filled: true,
+            fillColor: Theme.of(context).colorScheme.surface,
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 16,
+            ),
+          ),
+          keyboardType: const TextInputType.numberWithOptions(
+            decimal: true,
+          ),
+          validator: (value) {
+            if (value != null && value.isNotEmpty) {
+              final discountPrice = double.tryParse(value);
+              final regularPrice = double.tryParse(_priceController.text);
+              if (discountPrice == null) {
+                return 'Invalid price';
+              }
+              if (discountPrice < 0) {
+                return 'Cannot be negative';
+              }
+              if (regularPrice != null && discountPrice >= regularPrice) {
+                return 'Must be less than regular price';
+              }
+            }
+            return null;
+          },
         ),
       ],
     );
@@ -890,9 +1041,22 @@ class _AddProductFormState extends State<AddProductForm> {
         Expanded(
           flex: 2,
           child: ElevatedButton.icon(
-            onPressed: _saveProduct,
-            icon: const Icon(Icons.save),
-            label: const Text('Guardar Producto'),
+            onPressed: _isSaving ? null : _saveProduct,
+            icon: _isSaving
+                ? const SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                    ),
+                  )
+                : const Icon(Icons.save),
+            label: Text(
+              _isSaving
+                  ? 'Saving...'
+                  : (widget.isEditing ? 'Update Product' : 'Save Product'),
+            ),
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF5329C8),
               foregroundColor: Colors.white,
@@ -908,44 +1072,110 @@ class _AddProductFormState extends State<AddProductForm> {
     );
   }
 
-  void _saveProduct() {
+  Future<void> _saveProduct() async {
     if (_formKey.currentState!.validate()) {
-      final newProduct = {
-        'id': DateTime.now().millisecondsSinceEpoch.toString(),
-        'name': _nameController.text,
-        'brand': _brandController.text,
-        'sku': _skuController.text,
-        'price': double.tryParse(_priceController.text) ?? 0.0,
-        'originalPrice': _originalPriceController.text.isNotEmpty
-            ? double.tryParse(_originalPriceController.text)
-            : null,
-        'image': selectedImagePath ?? 'assets/images/labubu.png',
-        'category': selectedCategory,
-        'description': _descriptionController.text,
-        'detailedDescription': _detailedDescriptionController.text.isNotEmpty
-            ? _detailedDescriptionController.text
-            : _descriptionController.text,
-        'inStock': inStock,
-        'stockQuantity': _stockController.text.isNotEmpty
-            ? int.tryParse(_stockController.text) ?? 0
-            : 0,
-        'rating': 4.5,
-        'reviews': 0,
-        'dimensions': _dimensionsController.text,
-        'weight': _weightController.text,
-        'material': _materialController.text,
-        'ageRange': _ageRangeController.text,
-        'origin': _originController.text,
-        'tags': _tagsController.text.isNotEmpty
-            ? _tagsController.text.split(',').map((e) => e.trim()).toList()
-            : <String>[],
-        'features': _featuresController.text.isNotEmpty
-            ? _featuresController.text.split(',').map((e) => e.trim()).toList()
-            : <String>[],
-      };
+      setState(() {
+        _isSaving = true;
+      });
 
-      widget.onProductAdded(newProduct);
-      Navigator.pop(context);
+      try {
+        // Get auth token
+        final token = await _authService.getToken();
+        if (token == null) {
+          throw Exception('Not authenticated. Please log in.');
+        }
+
+        // Prepare product data for API
+        final productData = {
+          'name': _nameController.text,
+          'description': _descriptionController.text,
+          'detailedDescription': _detailedDescriptionController.text.isNotEmpty
+              ? _detailedDescriptionController.text
+              : _descriptionController.text,
+          'price': double.tryParse(_priceController.text) ?? 0.0,
+          'production_cost': _productionCostController.text.isNotEmpty
+              ? double.tryParse(_productionCostController.text) ?? 0
+              : 0,
+          'discount_price': _discountPriceController.text.isNotEmpty
+              ? double.tryParse(_discountPriceController.text)
+              : null,
+          'discount_end_date': null, // Could add a date picker for this
+          'stockQuantity': _stockController.text.isNotEmpty
+              ? int.tryParse(_stockController.text) ?? 0
+              : 0,
+          'inStock': inStock,
+          'store_id': storeId ?? 7, // Use fetched store ID or fallback
+          'category_id': selectedCategoryId ?? 1, // Use selected category ID or fallback
+          'tag_ids': [], // Could add tag selection
+          'images': uploadedImages,
+          // Additional fields for local use
+          'brand': _brandController.text,
+          'sku': _skuController.text,
+          'category': selectedCategory,
+          'dimensions': _dimensionsController.text,
+          'weight': _weightController.text,
+          'material': _materialController.text,
+          'ageRange': _ageRangeController.text,
+          'origin': _originController.text,
+          'tags': _tagsController.text.isNotEmpty
+              ? _tagsController.text.split(',').map((e) => e.trim()).toList()
+              : <String>[],
+          'features': _featuresController.text.isNotEmpty
+              ? _featuresController.text.split(',').map((e) => e.trim()).toList()
+              : <String>[],
+        };
+
+        if (widget.isEditing) {
+          // Update existing product
+          final productId = int.tryParse(widget.existingProduct!['id'].toString());
+          if (productId != null) {
+            await _productsService.updateProduct(productId, productData, token);
+            
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('${_nameController.text} updated successfully!'),
+                  backgroundColor: Colors.green,
+                ),
+              );
+            }
+          }
+        } else {
+          // Create new product
+          await _productsService.createProduct(productData, token);
+          
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('${_nameController.text} created successfully!'),
+                backgroundColor: Colors.green,
+              ),
+            );
+          }
+        }
+
+        // Notify parent and close
+        widget.onProductAdded(productData);
+        if (mounted) {
+          Navigator.pop(context);
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error: ${e.toString()}'),
+              backgroundColor: Colors.red,
+              duration: const Duration(seconds: 4),
+            ),
+          );
+        }
+      } finally {
+        if (mounted) {
+          setState(() {
+            _isSaving = false;
+          });
+        }
+      }
     }
   }
 

@@ -34,6 +34,9 @@ class ApiConstants {
   static const String updateProductEndpoint = '/products/{id}';
   static const String deleteProductEndpoint = '/products/{id}';
   
+  // Category Endpoints
+  static const String categoriesEndpoint = '/categories';
+  
   // Order Endpoints
   static const String ordersEndpoint = '/orders';
   static const String orderDetailsEndpoint = '/orders/{id}';

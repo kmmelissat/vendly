@@ -73,7 +73,7 @@ class Product {
   bool get inStock => stock > 0 && isActive;
   String get description => shortDescription;
   String get detailedDescription => longDescription;
-  String get image => images.isNotEmpty ? images.first : '';
+  String? get image => images.isNotEmpty ? images.first : null;
 
   int get stockQuantity => stock;
 
@@ -85,7 +85,7 @@ class Product {
       'price': price,
       'originalPrice': null, // API doesn't provide original price
       'image': image,
-      'category': 'Product', // Default category
+      'category': 'Others', // Default category
       'brand': 'Store Brand', // Default brand
       'sku': 'SKU-$id', // Generate SKU from ID
       'description': shortDescription,
