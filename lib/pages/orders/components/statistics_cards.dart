@@ -1,34 +1,68 @@
 import 'package:flutter/material.dart';
 
 class StatisticsCards extends StatelessWidget {
-  const StatisticsCards({super.key});
+  final Map<String, dynamic>? analyticsData;
+  final bool isLoading;
+
+  const StatisticsCards({
+    super.key,
+    this.analyticsData,
+    this.isLoading = false,
+  });
+
+  String _formatCurrency(dynamic value) {
+    if (value == null) return '0.00';
+    final numValue = value is num ? value : double.tryParse(value.toString()) ?? 0;
+    return numValue.toStringAsFixed(2);
+  }
+
+  String _formatChange(dynamic changePercent) {
+    if (changePercent == null || changePercent == 0) return 'No change';
+    final numValue = changePercent is num 
+        ? changePercent 
+        : double.tryParse(changePercent.toString()) ?? 0;
+    final sign = numValue >= 0 ? '+' : '';
+    return '$sign${numValue.toStringAsFixed(1)}% vs last period';
+  }
 
   @override
   Widget build(BuildContext context) {
+    // Extract data from API response or use defaults
+    final totalOrders = analyticsData?['total_orders'] ?? {};
+    final totalRevenue = analyticsData?['total_revenue'] ?? {};
+    final totalIncome = analyticsData?['total_income'] ?? {};
+    final avgOrderValue = analyticsData?['average_order_value'] ?? {};
+
     final stats = [
       {
         'title': 'Total Orders',
-        'value': '21',
-        'change': '+25.2% last week',
-        'isPositive': true,
+        'value': isLoading ? '...' : '${totalOrders['value'] ?? 0}',
+        'change': _formatChange(totalOrders['change_percent']),
+        'isPositive': (totalOrders['change_percent'] ?? 0) >= 0,
       },
       {
-        'title': 'Order items over time',
-        'value': '15',
-        'change': '+18.2% last week',
-        'isPositive': true,
+        'title': 'Total Revenue',
+        'value': isLoading 
+            ? '...' 
+            : '\$${_formatCurrency(totalRevenue['value'] ?? 0)}',
+        'change': _formatChange(totalRevenue['change_percent']),
+        'isPositive': (totalRevenue['change_percent'] ?? 0) >= 0,
       },
       {
-        'title': 'Returns Orders',
-        'value': '0',
-        'change': '-1.2% last week',
-        'isPositive': false,
+        'title': 'Total Income',
+        'value': isLoading 
+            ? '...' 
+            : '\$${_formatCurrency(totalIncome['value'] ?? 0)}',
+        'change': _formatChange(totalIncome['change_percent']),
+        'isPositive': (totalIncome['change_percent'] ?? 0) >= 0,
       },
       {
-        'title': 'Fulfilled orders over time',
-        'value': '12',
-        'change': '+12.2% last week',
-        'isPositive': true,
+        'title': 'Avg Order Value',
+        'value': isLoading 
+            ? '...' 
+            : '\$${_formatCurrency(avgOrderValue['value'] ?? 0)}',
+        'change': _formatChange(avgOrderValue['change_percent']),
+        'isPositive': (avgOrderValue['change_percent'] ?? 0) >= 0,
       },
     ];
 

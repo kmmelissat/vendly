@@ -8,17 +8,21 @@ import 'logger_service.dart';
 class ImageUploadService {
   static final ImageUploadService _instance = ImageUploadService._internal();
   factory ImageUploadService() => _instance;
-  
+
   late final Dio _dio;
 
   ImageUploadService._internal() {
-    _dio = Dio(BaseOptions(
-      baseUrl: ApiConstants.baseUrl,
-      connectTimeout: const Duration(seconds: 30), // Longer timeout for uploads
-      receiveTimeout: const Duration(seconds: 30),
-      sendTimeout: const Duration(seconds: 30),
-      headers: ApiConstants.defaultHeaders,
-    ));
+    _dio = Dio(
+      BaseOptions(
+        baseUrl: ApiConstants.baseUrl,
+        connectTimeout: const Duration(
+          seconds: 30,
+        ), // Longer timeout for uploads
+        receiveTimeout: const Duration(seconds: 30),
+        sendTimeout: const Duration(seconds: 30),
+        headers: ApiConstants.defaultHeaders,
+      ),
+    );
   }
 
   /// Upload images to a product (max 10 images)
@@ -29,61 +33,62 @@ class ImageUploadService {
     required String authToken,
   }) async {
     try {
-      LoggerService.info('Uploading ${imageFiles.length} images for product $productId');
-      
+      LoggerService.info(
+        'Uploading ${imageFiles.length} images for product $productId',
+      );
+
       if (imageFiles.isEmpty) {
         throw ImageUploadException('No images to upload');
       }
-      
+
       if (imageFiles.length > 10) {
         throw ImageUploadException('Maximum 10 images allowed');
       }
 
       final formData = FormData();
-      
+
       // Add each image to the form data with field name 'files' as expected by API
       for (int i = 0; i < imageFiles.length; i++) {
         final imageFile = imageFiles[i];
-        
+
         if (kIsWeb) {
           // On web, read bytes and create MultipartFile from bytes
           final bytes = await imageFile.readAsBytes();
-          formData.files.add(MapEntry(
-            'files',
-            MultipartFile.fromBytes(
-              bytes,
-              filename: imageFile.name,
+          formData.files.add(
+            MapEntry(
+              'files',
+              MultipartFile.fromBytes(bytes, filename: imageFile.name),
             ),
-          ));
+          );
         } else {
           // On mobile/desktop, use file path
-          formData.files.add(MapEntry(
-            'files',
-            await MultipartFile.fromFile(
-              imageFile.path,
-              filename: imageFile.name,
+          formData.files.add(
+            MapEntry(
+              'files',
+              await MultipartFile.fromFile(
+                imageFile.path,
+                filename: imageFile.name,
+              ),
             ),
-          ));
+          );
         }
       }
 
-      final endpoint = ApiConstants.uploadProductImagesEndpoint
-          .replaceAll('{productId}', productId.toString());
+      final endpoint = ApiConstants.uploadProductImagesEndpoint.replaceAll(
+        '{productId}',
+        productId.toString(),
+      );
 
       final response = await _dio.post(
         endpoint,
         data: formData,
-        options: Options(
-          headers: {
-            'Authorization': 'Bearer $authToken',
-          },
-        ),
+        options: Options(headers: {'Authorization': 'Bearer $authToken'}),
       );
 
       if (response.data != null) {
         // Assuming the API returns a list of image URLs or objects
         final List<String> uploadedUrls = [];
-        
+
         if (response.data is List) {
           for (var item in response.data) {
             if (item is String) {
@@ -106,8 +111,10 @@ class ImageUploadService {
             }
           }
         }
-        
-        LoggerService.info('Successfully uploaded ${uploadedUrls.length} images');
+
+        LoggerService.info(
+          'Successfully uploaded ${uploadedUrls.length} images',
+        );
         return uploadedUrls;
       } else {
         throw ImageUploadException('Invalid response format');
@@ -124,20 +131,21 @@ class ImageUploadService {
     }
   }
 
-
   /// Get all images for a product
   Future<List<String>> getProductImages(int productId) async {
     try {
       LoggerService.info('Fetching images for product $productId');
-      
-      final endpoint = ApiConstants.getProductImagesEndpoint
-          .replaceAll('{productId}', productId.toString());
+
+      final endpoint = ApiConstants.getProductImagesEndpoint.replaceAll(
+        '{productId}',
+        productId.toString(),
+      );
 
       final response = await _dio.get(endpoint);
 
       if (response.data != null) {
         final List<String> imageUrls = [];
-        
+
         if (response.data is List) {
           for (var item in response.data) {
             if (item is String) {
@@ -160,8 +168,10 @@ class ImageUploadService {
             }
           }
         }
-        
-        LoggerService.info('Found ${imageUrls.length} images for product $productId');
+
+        LoggerService.info(
+          'Found ${imageUrls.length} images for product $productId',
+        );
         return imageUrls;
       } else {
         return [];
@@ -186,21 +196,19 @@ class ImageUploadService {
   }) async {
     try {
       LoggerService.info('Deleting image $imageId from product $productId');
-      
+
       final endpoint = ApiConstants.deleteProductImageEndpoint
           .replaceAll('{productId}', productId.toString())
           .replaceAll('{imageId}', imageId.toString());
 
       await _dio.delete(
         endpoint,
-        options: Options(
-          headers: {
-            'Authorization': 'Bearer $authToken',
-          },
-        ),
+        options: Options(headers: {'Authorization': 'Bearer $authToken'}),
       );
 
-      LoggerService.info('Successfully deleted image $imageId from product $productId');
+      LoggerService.info(
+        'Successfully deleted image $imageId from product $productId',
+      );
     } on DioException catch (e) {
       LoggerService.error('Dio error deleting image: ${e.message}');
       throw ImageUploadException(
@@ -219,11 +227,11 @@ class ImageUploadService {
     if (kIsWeb && filePath.startsWith('blob:')) {
       return true;
     }
-    
+
     // For regular file paths, validate extension
     final extension = filePath.toLowerCase().split('.').last;
     const validExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
-    
+
     return validExtensions.contains(extension);
   }
 
@@ -234,10 +242,10 @@ class ImageUploadService {
       // Return 0 to skip size validation
       return 0;
     }
-    
+
     final file = File(filePath);
     if (!file.existsSync()) return 0;
-    
+
     final bytes = file.lengthSync();
     return bytes / (1024 * 1024); // Convert to MB
   }
