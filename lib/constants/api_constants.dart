@@ -51,6 +51,11 @@ class ApiConstants {
   static const String customersEndpoint = '/customers';
   static const String customerDetailsEndpoint = '/customers/{id}';
   
+  // Chat Endpoints
+  static const String chatConversationsEndpoint = '/chat/stores/{storeId}/conversations';
+  static const String chatMessagesEndpoint = '/chat/conversations/{storeId}/messages';
+  static const String sendMessageEndpoint = '/chat/messages';
+  
   // Analytics Endpoints
   static const String analyticsEndpoint = '/analytics';
   static const String analyticsSummaryEndpoint = '/orders/analytics/summary/{storeId}';

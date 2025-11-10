@@ -169,7 +169,7 @@ class _CustomersPageState extends State<CustomersPage> {
                     icon: const Icon(Icons.refresh),
                     onPressed: _loadCustomers,
                     tooltip: 'Refresh',
-                  ),
+                ),
               ],
             ),
           ),
@@ -185,48 +185,48 @@ class _CustomersPageState extends State<CustomersPage> {
                           horizontal: 12,
                           vertical: 8,
                         ),
-                        child: Column(
-                          children: [
-                            // Search and Filters
-                            CustomersHeader(
-                              searchQuery: searchQuery,
-                              selectedFilter: selectedFilter,
-                              sortBy: sortBy,
-                              filterOptions: filterOptions,
-                              sortOptions: sortOptions,
-                              onSearchChanged: (query) {
-                                setState(() {
-                                  searchQuery = query;
-                                });
-                              },
-                              onFilterChanged: (filter) {
-                                setState(() {
-                                  selectedFilter = filter;
-                                });
-                              },
-                              onSortChanged: (sort) {
-                                setState(() {
-                                  sortBy = sort;
-                                });
-                              },
-                            ),
+              child: Column(
+                children: [
+                  // Search and Filters
+                  CustomersHeader(
+                    searchQuery: searchQuery,
+                    selectedFilter: selectedFilter,
+                    sortBy: sortBy,
+                    filterOptions: filterOptions,
+                    sortOptions: sortOptions,
+                    onSearchChanged: (query) {
+                      setState(() {
+                        searchQuery = query;
+                      });
+                    },
+                    onFilterChanged: (filter) {
+                      setState(() {
+                        selectedFilter = filter;
+                      });
+                    },
+                    onSortChanged: (sort) {
+                      setState(() {
+                        sortBy = sort;
+                      });
+                    },
+                  ),
 
-                            const SizedBox(height: 24),
+                  const SizedBox(height: 24),
 
-                            // Customers List
-                            CustomersList(
-                              customers: filteredCustomers,
-                              onCustomerTap: (customer) {
-                                _showCustomerDetails(context, customer);
-                              },
-                            ),
+                  // Customers List
+                  CustomersList(
+                    customers: filteredCustomers,
+                    onCustomerTap: (customer) {
+                      _showCustomerDetails(context, customer);
+                    },
+                  ),
 
                             const SizedBox(
                               height: 100,
                             ), // Bottom padding for navigation
-                          ],
-                        ),
-                      ),
+                ],
+              ),
+            ),
           ),
         ],
       ),

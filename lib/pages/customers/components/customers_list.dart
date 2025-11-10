@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../customer_chat_page.dart';
 
 class CustomersList extends StatelessWidget {
   final List<Map<String, dynamic>> customers;
@@ -150,6 +151,18 @@ class CustomersList extends StatelessWidget {
                         ),
                       ],
                     ),
+                  ),
+
+                  // Chat Button
+                  IconButton(
+                    onPressed: () {
+                      _openChat(context, customer);
+                    },
+                    icon: Icon(
+                      Icons.chat_bubble_outline,
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                    tooltip: 'Chat with ${customer['name']}',
                   ),
                 ],
               ),
@@ -326,5 +339,17 @@ class CustomersList extends StatelessWidget {
     } else {
       return '${date.day}/${date.month}';
     }
+  }
+
+  void _openChat(BuildContext context, Map<String, dynamic> customer) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => CustomerChatPage(
+          customerId: customer['id'],
+          customerName: customer['name'],
+          customerAvatar: customer['avatar'],
+        ),
+      ),
+    );
   }
 }
