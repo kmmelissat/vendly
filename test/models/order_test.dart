@@ -25,9 +25,9 @@ void main() {
             "quantity": 2,
             "unit_price": 20,
             "id": 14,
-            "order_id": 9
-          }
-        ]
+            "order_id": 9,
+          },
+        ],
       };
 
       final order = Order.fromJson(json);
@@ -65,7 +65,7 @@ void main() {
         "shipped_at": "2025-11-10T10:00:00.000000",
         "delivered_at": "2025-11-11T15:30:00.000000",
         "canceled_at": null,
-        "products": []
+        "products": [],
       };
 
       final order = Order.fromJson(json);
@@ -98,9 +98,9 @@ void main() {
             "quantity": 2,
             "unit_price": 20,
             "id": 14,
-            "order_id": 1
-          }
-        ]
+            "order_id": 1,
+          },
+        ],
       };
 
       final order = Order.fromJson(json);
@@ -122,7 +122,7 @@ void main() {
         "quantity": 3,
         "unit_price": 15.50,
         "id": 14,
-        "order_id": 9
+        "order_id": 9,
       };
 
       final orderProduct = OrderProduct.fromJson(json);
@@ -131,4 +131,3 @@ void main() {
     });
   });
 }
-
