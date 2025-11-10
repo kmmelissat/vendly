@@ -51,6 +51,17 @@ class AuthService {
           // Check for authentication errors
           if (error.response?.statusCode == 401) {
             final responseData = error.response?.data;
+            final requestPath = error.requestOptions.path;
+
+            // Don't try to refresh if this IS the refresh endpoint
+            if (requestPath.contains('/auth/refresh')) {
+              LoggerService.warning(
+                'Refresh token endpoint failed, logging out',
+              );
+              await logout();
+              handler.next(error);
+              return;
+            }
 
             // Check if it's a token expiration error
             if (responseData is Map &&
@@ -58,37 +69,74 @@ class AuthService {
                     responseData['detail']?.toString().toLowerCase().contains(
                           'token',
                         ) ==
+                        true ||
+                    responseData['detail']?.toString().toLowerCase().contains(
+                          'expired',
+                        ) ==
                         true)) {
-              LoggerService.warning('Token expired, attempting to refresh');
+              LoggerService.warning(
+                'Token expired or invalid, attempting to refresh',
+              );
+              LoggerService.debug('Auth error details: $responseData');
 
               // Try to refresh the token
               if (!_isRefreshing) {
                 _isRefreshing = true;
-                final refreshed = await refreshToken();
-                _isRefreshing = false;
 
-                if (refreshed) {
-                  // Retry the original request with new token
+                try {
+                  final refreshed = await refreshToken();
+
+                  if (refreshed) {
+                    LoggerService.info(
+                      'Token refreshed, retrying original request',
+                    );
+                    // Retry the original request with new token
+                    try {
+                      final token = await getToken();
+                      error.requestOptions.headers[ApiConstants
+                              .authorizationHeader] =
+                          'Bearer $token';
+
+                      final response = await _dio.fetch(error.requestOptions);
+                      return handler.resolve(response);
+                    } catch (e) {
+                      LoggerService.error(
+                        'Failed to retry request after token refresh',
+                        error: e,
+                      );
+                    }
+                  } else {
+                    // Refresh failed, logout user
+                    LoggerService.warning(
+                      'Token refresh failed, logging out user',
+                    );
+                    await logout();
+                  }
+                } finally {
+                  _isRefreshing = false;
+                }
+              } else {
+                LoggerService.debug(
+                  'Token refresh already in progress, waiting...',
+                );
+                // Wait a bit and let the other refresh complete
+                await Future.delayed(const Duration(milliseconds: 500));
+
+                // Check if we now have a valid token
+                final token = await getToken();
+                if (token != null) {
+                  LoggerService.debug(
+                    'Token available after waiting, retrying request',
+                  );
                   try {
-                    final token = await getToken();
                     error.requestOptions.headers[ApiConstants
                             .authorizationHeader] =
                         'Bearer $token';
-
                     final response = await _dio.fetch(error.requestOptions);
                     return handler.resolve(response);
                   } catch (e) {
-                    LoggerService.error(
-                      'Failed to retry request after token refresh',
-                      error: e,
-                    );
+                    LoggerService.error('Retry after waiting failed', error: e);
                   }
-                } else {
-                  // Refresh failed, logout user
-                  LoggerService.warning(
-                    'Token refresh failed, logging out user',
-                  );
-                  await logout();
                 }
               }
             }
@@ -477,6 +525,29 @@ class AuthService {
     return token != null && token.isNotEmpty;
   }
 
+  // Manually refresh the token (useful for testing or forcing refresh)
+  Future<bool> manualRefreshToken() async {
+    LoggerService.info('Manual token refresh requested');
+    return await refreshToken();
+  }
+
+  // Validate token by making a test request
+  Future<bool> validateToken() async {
+    try {
+      final token = await getToken();
+      if (token == null || token.isEmpty) {
+        return false;
+      }
+
+      // Try to get user profile as a validation check
+      final response = await _dio.get(ApiConstants.profileEndpoint);
+      return response.statusCode == 200;
+    } catch (e) {
+      LoggerService.debug('Token validation failed', data: e);
+      return false;
+    }
+  }
+
   // Get user data
   Future<Map<String, dynamic>?> getUserData() async {
     final prefs = await SharedPreferences.getInstance();
@@ -525,15 +596,33 @@ class AuthService {
   Future<bool> refreshToken() async {
     try {
       final refreshToken = await getRefreshToken();
-      if (refreshToken == null) {
+      if (refreshToken == null || refreshToken.isEmpty) {
         LoggerService.warning('No refresh token available');
         return false;
       }
 
-      final response = await _dio.post(
+      LoggerService.debug('Attempting to refresh token');
+
+      // Create a new Dio instance without interceptors to avoid infinite loop
+      final refreshDio = Dio();
+      refreshDio.options.baseUrl = ApiConstants.baseUrl;
+      refreshDio.options.connectTimeout = ApiConstants.connectTimeout;
+      refreshDio.options.receiveTimeout = ApiConstants.receiveTimeout;
+      refreshDio.options.sendTimeout = ApiConstants.sendTimeout;
+
+      final response = await refreshDio.post(
         ApiConstants.refreshTokenEndpoint,
         data: {'refresh_token': refreshToken},
+        options: Options(
+          headers: {
+            ApiConstants.contentTypeHeader: ApiConstants.jsonContentType,
+            ApiConstants.acceptHeader: ApiConstants.jsonContentType,
+          },
+        ),
       );
+
+      LoggerService.debug('Refresh response status: ${response.statusCode}');
+      LoggerService.debug('Refresh response data: ${response.data}');
 
       if (response.statusCode == 200) {
         final data = response.data;
@@ -544,11 +633,27 @@ class AuthService {
           }
           LoggerService.info('Token refreshed successfully');
           return true;
+        } else {
+          LoggerService.warning('Refresh response missing access_token');
+          return false;
         }
+      } else {
+        LoggerService.warning(
+          'Refresh failed with status: ${response.statusCode}',
+        );
+        return false;
       }
+    } on DioException catch (e) {
+      LoggerService.error('Token refresh failed with DioException', error: e);
+      LoggerService.debug('Refresh error response: ${e.response?.data}');
+      LoggerService.debug('Refresh error status: ${e.response?.statusCode}');
       return false;
-    } catch (e) {
-      LoggerService.error('Token refresh failed', error: e);
+    } catch (e, stackTrace) {
+      LoggerService.error(
+        'Token refresh failed with unexpected error',
+        error: e,
+        stackTrace: stackTrace,
+      );
       return false;
     }
   }

@@ -3,7 +3,6 @@ import '../../models/analytics_dashboard.dart';
 import '../../services/analytics_service.dart';
 import 'components/analytics_overview.dart';
 import 'components/sales_performance.dart';
-import 'components/customer_insights.dart';
 import 'components/product_analytics.dart';
 import 'components/growth_metrics.dart';
 
@@ -273,29 +272,6 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
                             ],
                             selectedPeriod:
                                 periods[selectedPeriod] ?? 'Last 30 Days',
-                          ),
-
-                          const SizedBox(height: 24),
-
-                          // Customer Insights - Using mock data for now
-                          CustomerInsights(
-                            customerDemographics: const {
-                              'ageGroups': {
-                                '18-24': 28.5,
-                                '25-34': 42.3,
-                                '35-44': 18.7,
-                                '45-54': 8.2,
-                                '55+': 2.3,
-                              },
-                              'locations': {
-                                'San Salvador': 45.2,
-                                'Santa Ana': 18.7,
-                                'San Miguel': 12.4,
-                                'La Libertad': 10.8,
-                                'Others': 12.9,
-                              },
-                            },
-                            retentionRate: 68.5,
                           ),
 
                           const SizedBox(height: 24),
