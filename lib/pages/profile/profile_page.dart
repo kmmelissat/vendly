@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'components/profile_header.dart';
-import 'components/profile_stats.dart';
 import 'components/profile_menu.dart';
 import 'components/profile_settings.dart';
+import '../../services/user_service.dart';
+import '../../services/auth_service.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -12,62 +13,118 @@ class ProfilePage extends StatefulWidget {
 }
 
 class _ProfilePageState extends State<ProfilePage> {
-  // Sample user data
-  final Map<String, dynamic> userData = {
-    'name': 'LabubuLand',
-    'email': 'melissa@vendly.com',
-    'phone': '+503 7123-4567',
-    'role': 'Store Manager',
-    'joinDate': '2023-08-15',
-    'avatar': 'assets/images/customers/customer1.jpg',
-    'businessName': 'LabubuLand',
-    'businessType': 'Collectibles & Toys',
-    'location': 'San Salvador, El Salvador',
-    'stats': {
-      'totalSales': 45280.75,
-      'ordersManaged': 892,
-      'customersServed': 234,
-      'productsListed': 48,
-    },
-    'preferences': {
-      'notifications': true,
-      'emailAlerts': true,
-      'darkMode': false,
-      'language': 'English',
-      'currency': 'USD',
-      'timeZone': 'America/El_Salvador',
-    },
-    'recentActivity': [
-      {
-        'action': 'Added new product',
-        'item': 'Labubu Pink Series',
-        'time': '2 hours ago',
-        'icon': Icons.add_circle,
-        'color': Colors.green,
-      },
-      {
-        'action': 'Updated inventory',
-        'item': 'Sonny Angel Collection',
-        'time': '5 hours ago',
-        'icon': Icons.inventory,
-        'color': Colors.blue,
-      },
-      {
-        'action': 'Processed order',
-        'item': 'Order #1234',
-        'time': '1 day ago',
-        'icon': Icons.shopping_bag,
-        'color': Colors.orange,
-      },
-      {
-        'action': 'Customer inquiry',
-        'item': 'Support ticket #567',
-        'time': '2 days ago',
-        'icon': Icons.support_agent,
-        'color': Colors.purple,
-      },
-    ],
-  };
+  final UserService _userService = UserService();
+  final AuthService _authService = AuthService();
+
+  bool _isLoading = true;
+  Map<String, dynamic>? _userData;
+  String? _errorMessage;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserProfile();
+  }
+
+  Future<void> _loadUserProfile() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      // Try to fetch from API first
+      final apiData = await _userService.getCurrentUserProfile();
+
+      if (apiData != null) {
+        // Transform API data to match our UI structure
+        final store = apiData['store'] as Map<String, dynamic>? ?? {};
+
+        setState(() {
+          _userData = {
+            'id': apiData['id']?.toString() ?? '',
+            'name': apiData['username'] ?? 'User',
+            'username': apiData['username'] ?? 'User',
+            'email': apiData['email'] ?? '',
+            'phone': store['phone'] ?? '',
+            'role': 'Store Owner',
+            'userType': apiData['user_type'] ?? 'store',
+            'joinDate': apiData['created_at'] ?? '',
+            'avatar':
+                store['profile_image'] ??
+                'assets/images/customers/customer1.jpg',
+            'businessName': store['name'] ?? 'My Store',
+            'businessType': store['type'] ?? 'General Store',
+            'location':
+                store['location'] ??
+                store['store_location'] ??
+                'Location not set',
+            'storeDescription': store['description'] ?? '',
+            'storeId': store['id']?.toString() ?? '',
+            'showcaseImages': store['showcase_images'] ?? [],
+            'recentActivity': [],
+            'preferences': {
+              'notifications': true,
+              'emailAlerts': true,
+              'darkMode': false,
+              'language': 'English',
+              'currency': 'USD',
+              'timeZone': 'America/El_Salvador',
+            },
+          };
+          _isLoading = false;
+        });
+      } else {
+        // Fallback to cached auth data
+        final cachedData = await _authService.getUserData();
+        if (cachedData != null) {
+          final store = cachedData['store'] as Map<String, dynamic>? ?? {};
+
+          setState(() {
+            _userData = {
+              'id': cachedData['id']?.toString() ?? '',
+              'name': cachedData['username'] ?? 'User',
+              'username': cachedData['username'] ?? 'User',
+              'email': cachedData['email'] ?? '',
+              'phone': store['phone'] ?? '',
+              'role': 'Store Owner',
+              'userType': cachedData['user_type'] ?? 'store',
+              'joinDate': cachedData['created_at'] ?? '',
+              'avatar':
+                  store['profile_image'] ??
+                  'assets/images/customers/customer1.jpg',
+              'businessName': store['name'] ?? 'My Store',
+              'businessType': store['type'] ?? 'General Store',
+              'location': store['store_location'] ?? 'Location not set',
+              'storeDescription': '',
+              'storeId': store['id']?.toString() ?? '',
+              'showcaseImages': [],
+              'recentActivity': [],
+              'preferences': {
+                'notifications': true,
+                'emailAlerts': true,
+                'darkMode': false,
+                'language': 'English',
+                'currency': 'USD',
+                'timeZone': 'America/El_Salvador',
+              },
+            };
+            _isLoading = false;
+          });
+        } else {
+          setState(() {
+            _errorMessage = 'Failed to load profile data';
+            _isLoading = false;
+          });
+        }
+      }
+    } catch (e) {
+      setState(() {
+        _errorMessage = 'Error loading profile: $e';
+        _isLoading = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -86,102 +143,133 @@ class _ProfilePageState extends State<ProfilePage> {
                     context,
                   ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
                 ),
-                Row(
-                  children: [
-                    // Edit Profile Button
-                    Container(
-                      height: 32,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 0,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.primary,
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: TextButton(
-                        onPressed: () => _showEditProfileModal(context),
-                        style: TextButton.styleFrom(
-                          padding: EdgeInsets.zero,
-                          minimumSize: Size.zero,
-                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                if (!_isLoading && _userData != null)
+                  Row(
+                    children: [
+                      // Edit Profile Button
+                      Container(
+                        height: 32,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 0,
                         ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(Icons.edit, size: 14, color: Colors.white),
-                            const SizedBox(width: 4),
-                            Text(
-                              'Edit',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).colorScheme.primary,
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: TextButton(
+                          onPressed: () => _showEditProfileModal(context),
+                          style: TextButton.styleFrom(
+                            padding: EdgeInsets.zero,
+                            minimumSize: Size.zero,
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.edit, size: 14, color: Colors.white),
+                              const SizedBox(width: 4),
+                              Text(
+                                'Edit',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                       ),
-                    ),
-                    const SizedBox(width: 8),
-                    // Settings Button
-                    Container(
-                      height: 32,
-                      width: 32,
-                      decoration: BoxDecoration(
-                        color: Theme.of(
-                          context,
-                        ).colorScheme.surfaceContainerHighest,
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(
+                      const SizedBox(width: 8),
+                      // Settings Button
+                      Container(
+                        height: 32,
+                        width: 32,
+                        decoration: BoxDecoration(
                           color: Theme.of(
                             context,
-                          ).dividerColor.withOpacity(0.3),
+                          ).colorScheme.surfaceContainerHighest,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: Theme.of(
+                              context,
+                            ).dividerColor.withOpacity(0.3),
+                          ),
+                        ),
+                        child: IconButton(
+                          onPressed: () => _showSettingsModal(context),
+                          icon: Icon(
+                            Icons.settings,
+                            size: 16,
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.onSurface.withOpacity(0.7),
+                          ),
+                          padding: EdgeInsets.zero,
                         ),
                       ),
-                      child: IconButton(
-                        onPressed: () => _showSettingsModal(context),
-                        icon: Icon(
-                          Icons.settings,
-                          size: 16,
-                          color: Theme.of(
-                            context,
-                          ).colorScheme.onSurface.withOpacity(0.7),
-                        ),
-                        padding: EdgeInsets.zero,
-                      ),
-                    ),
-                  ],
-                ),
+                    ],
+                  ),
               ],
             ),
           ),
 
           // Content
           Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              child: Column(
-                children: [
-                  // Profile Header
-                  ProfileHeader(userData: userData),
+            child: _isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : _errorMessage != null
+                ? Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.error_outline,
+                          size: 64,
+                          color: Theme.of(context).colorScheme.error,
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          _errorMessage!,
+                          style: Theme.of(context).textTheme.bodyLarge,
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 16),
+                        ElevatedButton(
+                          onPressed: _loadUserProfile,
+                          child: const Text('Retry'),
+                        ),
+                      ],
+                    ),
+                  )
+                : RefreshIndicator(
+                    onRefresh: _loadUserProfile,
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
+                      ),
+                      child: Column(
+                        children: [
+                          // Profile Header
+                          ProfileHeader(userData: _userData!),
 
-                  const SizedBox(height: 24),
+                          const SizedBox(height: 24),
 
-                  // Profile Stats
-                  ProfileStats(
-                    stats: Map<String, dynamic>.from(userData['stats']),
+                          // Profile Menu
+                          ProfileMenu(
+                            userData: _userData!,
+                            onMenuTap: _handleMenuTap,
+                          ),
+
+                          const SizedBox(
+                            height: 100,
+                          ), // Bottom padding for navigation
+                        ],
+                      ),
+                    ),
                   ),
-
-                  const SizedBox(height: 24),
-
-                  // Profile Menu
-                  ProfileMenu(userData: userData, onMenuTap: _handleMenuTap),
-
-                  const SizedBox(height: 100), // Bottom padding for navigation
-                ],
-              ),
-            ),
           ),
         ],
       ),
@@ -215,6 +303,12 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   void _showEditProfileModal(BuildContext context) {
+    if (_userData == null) return;
+
+    final nameController = TextEditingController(text: _userData!['name']);
+    final emailController = TextEditingController(text: _userData!['email']);
+    final phoneController = TextEditingController(text: _userData!['phone']);
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -270,7 +364,13 @@ class _ProfilePageState extends State<ProfilePage> {
                         children: [
                           CircleAvatar(
                             radius: 50,
-                            backgroundImage: AssetImage(userData['avatar']),
+                            backgroundImage:
+                                _userData!['avatar'].toString().startsWith(
+                                  'http',
+                                )
+                                ? NetworkImage(_userData!['avatar'])
+                                : AssetImage(_userData!['avatar'])
+                                      as ImageProvider,
                           ),
                           Positioned(
                             bottom: 0,
@@ -295,26 +395,45 @@ class _ProfilePageState extends State<ProfilePage> {
                     const SizedBox(height: 24),
 
                     // Form Fields
-                    _buildTextField('Full Name', userData['name']),
+                    _buildTextFieldWithController('Username', nameController),
                     const SizedBox(height: 16),
-                    _buildTextField('Email', userData['email']),
+                    _buildTextFieldWithController('Email', emailController),
                     const SizedBox(height: 16),
-                    _buildTextField('Phone', userData['phone']),
-                    const SizedBox(height: 16),
-                    _buildTextField('Role', userData['role']),
+                    _buildTextFieldWithController('Phone', phoneController),
                     const SizedBox(height: 24),
 
                     // Save Button
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
-                        onPressed: () {
-                          Navigator.pop(context);
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Profile updated successfully!'),
-                            ),
+                        onPressed: () async {
+                          // Update profile via API
+                          final result = await _userService.updateUserProfile(
+                            username: nameController.text,
+                            email: emailController.text,
                           );
+
+                          Navigator.pop(context);
+
+                          if (result['success'] == true) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Profile updated successfully!'),
+                              ),
+                            );
+                            // Reload profile data
+                            _loadUserProfile();
+                          } else {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  result['message'] ??
+                                      'Failed to update profile',
+                                ),
+                                backgroundColor: Colors.red,
+                              ),
+                            );
+                          }
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Theme.of(
@@ -345,6 +464,8 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   void _showSettingsModal(BuildContext context) {
+    if (_userData == null) return;
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -356,13 +477,15 @@ class _ProfilePageState extends State<ProfilePage> {
           borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
         ),
         child: ProfileSettings(
-          preferences: Map<String, dynamic>.from(userData['preferences']),
+          preferences: Map<String, dynamic>.from(_userData!['preferences']),
         ),
       ),
     );
   }
 
   void _showBusinessInfoModal(BuildContext context) {
+    if (_userData == null) return;
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -372,10 +495,15 @@ class _ProfilePageState extends State<ProfilePage> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildInfoRow('Business Name', userData['businessName']),
-            _buildInfoRow('Business Type', userData['businessType']),
-            _buildInfoRow('Location', userData['location']),
-            _buildInfoRow('Member Since', _formatDate(userData['joinDate'])),
+            _buildInfoRow('Business Name', _userData!['businessName'] ?? ''),
+            _buildInfoRow('Business Type', _userData!['businessType'] ?? ''),
+            _buildInfoRow('Location', _userData!['location'] ?? ''),
+            _buildInfoRow(
+              'Member Since',
+              _userData!['joinDate'] != null && _userData!['joinDate'] != ''
+                  ? _formatDate(_userData!['joinDate'])
+                  : 'N/A',
+            ),
           ],
         ),
         actions: [
@@ -490,9 +618,12 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  Widget _buildTextField(String label, String value) {
+  Widget _buildTextFieldWithController(
+    String label,
+    TextEditingController controller,
+  ) {
     return TextFormField(
-      initialValue: value,
+      controller: controller,
       decoration: InputDecoration(
         labelText: label,
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),

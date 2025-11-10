@@ -11,7 +11,7 @@ class ChatWebSocketService {
   StreamController<ChatMessage>? _messageController;
   StreamController<bool>? _typingController;
   StreamController<WebSocketState>? _stateController;
-  
+
   String? _currentStoreId;
   Timer? _reconnectTimer;
   Timer? _pingTimer;
@@ -19,12 +19,12 @@ class ChatWebSocketService {
   int _reconnectAttempts = 0;
   static const int _maxReconnectAttempts = 5;
   static const Duration _reconnectDelay = Duration(seconds: 3);
-  
+
   // Base WebSocket URL (replace with your actual WebSocket URL)
   static const String _wsBaseUrl = 'ws://localhost:8000';
-  
+
   ChatWebSocketService({AuthService? authService})
-      : _authService = authService ?? AuthService();
+    : _authService = authService ?? AuthService();
 
   /// Stream of incoming messages
   Stream<ChatMessage> get messageStream {
@@ -49,7 +49,7 @@ class ChatWebSocketService {
     try {
       _currentStoreId = storeId;
       _isIntentionalClose = false;
-      
+
       // Get authentication token
       final token = await _authService.getToken();
       if (token == null) {
@@ -63,7 +63,7 @@ class ChatWebSocketService {
 
       // Create WebSocket URL with token
       final wsUrl = '$_wsBaseUrl/chat/ws/$storeId?token=$token';
-      
+
       LoggerService.info('Connecting to WebSocket: $wsUrl');
       _updateState(WebSocketState.connecting);
 
@@ -80,10 +80,10 @@ class ChatWebSocketService {
 
       _updateState(WebSocketState.connected);
       _reconnectAttempts = 0;
-      
+
       // Start ping timer to keep connection alive
       _startPingTimer();
-      
+
       LoggerService.info('WebSocket connected successfully');
     } catch (e) {
       LoggerService.error('Error connecting to WebSocket', error: e);
@@ -97,7 +97,7 @@ class ChatWebSocketService {
     _isIntentionalClose = true;
     _reconnectTimer?.cancel();
     _pingTimer?.cancel();
-    
+
     try {
       await _channel?.sink.close();
       _channel = null;
@@ -141,9 +141,7 @@ class ChatWebSocketService {
     try {
       final message = {
         'type': 'typing',
-        'data': {
-          'is_typing': isTyping,
-        },
+        'data': {'is_typing': isTyping},
       };
 
       _channel!.sink.add(jsonEncode(message));
@@ -211,7 +209,7 @@ class ChatWebSocketService {
   void _handleDisconnect() {
     LoggerService.info('WebSocket disconnected');
     _updateState(WebSocketState.disconnected);
-    
+
     if (!_isIntentionalClose) {
       _scheduleReconnect();
     }
@@ -274,11 +272,4 @@ class ChatWebSocketService {
   }
 }
 
-enum WebSocketState {
-  disconnected,
-  connecting,
-  connected,
-  error,
-  failed,
-}
-
+enum WebSocketState { disconnected, connecting, connected, error, failed }

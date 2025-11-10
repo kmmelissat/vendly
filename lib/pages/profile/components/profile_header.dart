@@ -52,7 +52,7 @@ class ProfileHeader extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      userData['name'],
+                      userData['name'] ?? 'User',
                       style: const TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
@@ -61,7 +61,7 @@ class ProfileHeader extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      userData['role'],
+                      userData['role'] ?? 'Store Owner',
                       style: TextStyle(
                         fontSize: 14,
                         color: Colors.white.withOpacity(0.9),
@@ -89,7 +89,7 @@ class ProfileHeader extends StatelessWidget {
                           const SizedBox(width: 4),
                           Flexible(
                             child: Text(
-                              userData['businessName'],
+                              userData['businessName'] ?? 'My Store',
                               style: TextStyle(
                                 fontSize: 12,
                                 color: Colors.white.withOpacity(0.9),
@@ -119,14 +119,22 @@ class ProfileHeader extends StatelessWidget {
             ),
             child: Column(
               children: [
-                _buildContactItem(Icons.email, 'Email', userData['email']),
+                _buildContactItem(
+                  Icons.email,
+                  'Email',
+                  userData['email'] ?? 'Not set',
+                ),
                 const SizedBox(height: 12),
-                _buildContactItem(Icons.phone, 'Phone', userData['phone']),
+                _buildContactItem(
+                  Icons.phone,
+                  'Phone',
+                  userData['phone'] ?? 'Not set',
+                ),
                 const SizedBox(height: 12),
                 _buildContactItem(
                   Icons.location_on,
                   'Location',
-                  userData['location'],
+                  userData['location'] ?? 'Not set',
                 ),
               ],
             ),
@@ -135,25 +143,26 @@ class ProfileHeader extends StatelessWidget {
           const SizedBox(height: 16),
 
           // Member Since
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                Icons.calendar_today,
-                size: 16,
-                color: Colors.white.withOpacity(0.8),
-              ),
-              const SizedBox(width: 6),
-              Text(
-                'Member since ${_formatDate(userData['joinDate'])}',
-                style: TextStyle(
-                  fontSize: 12,
+          if (userData['joinDate'] != null && userData['joinDate'] != '')
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.calendar_today,
+                  size: 16,
                   color: Colors.white.withOpacity(0.8),
-                  fontWeight: FontWeight.w500,
                 ),
-              ),
-            ],
-          ),
+                const SizedBox(width: 6),
+                Text(
+                  'Member since ${_formatDate(userData['joinDate'])}',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.white.withOpacity(0.8),
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
         ],
       ),
     );
@@ -201,21 +210,25 @@ class ProfileHeader extends StatelessWidget {
   }
 
   String _formatDate(String dateString) {
-    final date = DateTime.parse(dateString);
-    final months = [
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dec',
-    ];
-    return '${months[date.month - 1]} ${date.year}';
+    try {
+      final date = DateTime.parse(dateString);
+      final months = [
+        'Jan',
+        'Feb',
+        'Mar',
+        'Apr',
+        'May',
+        'Jun',
+        'Jul',
+        'Aug',
+        'Sep',
+        'Oct',
+        'Nov',
+        'Dec',
+      ];
+      return '${months[date.month - 1]} ${date.year}';
+    } catch (e) {
+      return 'N/A';
+    }
   }
 }

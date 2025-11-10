@@ -100,7 +100,7 @@ class ChatMessage {
   // Helper getters
   bool get isRead => readAt != null;
   bool get hasAttachment => attachmentUrl != null && attachmentUrl!.isNotEmpty;
-  
+
   MessageStatus get messageStatus {
     switch (status.toLowerCase()) {
       case 'sending':
@@ -153,18 +153,6 @@ class SendMessageRequest {
   }
 }
 
-enum MessageStatus {
-  sending,
-  sent,
-  delivered,
-  read,
-  failed,
-}
+enum MessageStatus { sending, sent, delivered, read, failed }
 
-enum AttachmentType {
-  image,
-  video,
-  document,
-  location,
-}
-
+enum AttachmentType { image, video, document, location }
