@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'components/greeting_header.dart';
 import 'components/notification_items.dart';
-import 'components/urgent_orders.dart';
 import 'components/top_products.dart';
 
 class HomePage extends StatelessWidget {
@@ -20,10 +19,6 @@ class HomePage extends StatelessWidget {
 
           // Notification Items
           NotificationItems(),
-          SizedBox(height: 32),
-
-          // Urgent Orders to Fulfill
-          UrgentOrders(),
           SizedBox(height: 32),
 
           // Top Products
