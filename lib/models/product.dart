@@ -30,6 +30,20 @@ class Product {
   });
 
   factory Product.fromJson(Map<String, dynamic> json) {
+    final imagesList = (json['images'] as List<dynamic>)
+        .map((image) {
+          // Handle both string URLs and image objects
+          if (image is String) {
+            return image;
+          } else if (image is Map<String, dynamic>) {
+            // If it's an object, extract the image_url field
+            return image['image_url'] as String? ?? '';
+          }
+          return '';
+        })
+        .where((url) => url.isNotEmpty)
+        .toList();
+
     return Product(
       id: json['id'] as int,
       name: json['name'] as String,
@@ -45,9 +59,7 @@ class Product {
       tags: (json['tags'] as List<dynamic>)
           .map((tag) => ProductTag.fromJson(tag as Map<String, dynamic>))
           .toList(),
-      images: (json['images'] as List<dynamic>)
-          .map((image) => image as String)
-          .toList(),
+      images: imagesList,
     );
   }
 

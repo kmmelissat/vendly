@@ -300,9 +300,12 @@ class _ProductCardsViewState extends State<ProductCardsView> {
             ),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(16),
-              child: product['image'] != null && product['image'].toString().isNotEmpty
-                  ? _buildProductImage(product['image'])
-                  : _buildImagePlaceholder(),
+              child: () {
+                print('Grid card - Product ${product['id']}: image = ${product['image']}');
+                return product['image'] != null && product['image'].toString().isNotEmpty
+                    ? _buildProductImage(product['image'])
+                    : _buildImagePlaceholder();
+              }(),
             ),
           ),
         ),
@@ -451,9 +454,12 @@ class _ProductCardsViewState extends State<ProductCardsView> {
           ),
           child: ClipRRect(
             borderRadius: BorderRadius.circular(16),
-            child: product['image'] != null && product['image'].toString().isNotEmpty
-                ? _buildProductImage(product['image'])
-                : _buildImagePlaceholder(),
+            child: () {
+              print('List card - Product ${product['id']}: image = ${product['image']}');
+              return product['image'] != null && product['image'].toString().isNotEmpty
+                  ? _buildProductImage(product['image'])
+                  : _buildImagePlaceholder();
+            }(),
           ),
         ),
         const SizedBox(width: 16),
@@ -568,16 +574,23 @@ class _ProductCardsViewState extends State<ProductCardsView> {
   }
 
   Widget _buildProductImage(String imagePath) {
+    print('_buildProductImage called with: $imagePath');
+    
     // Check if it's a network URL
     if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
+      print('Loading network image: $imagePath');
       return Image.network(
         imagePath,
         fit: BoxFit.cover,
         errorBuilder: (context, error, stackTrace) {
+          print('Error loading image $imagePath: $error');
           return _buildImagePlaceholder();
         },
         loadingBuilder: (context, child, loadingProgress) {
-          if (loadingProgress == null) return child;
+          if (loadingProgress == null) {
+            print('Image loaded successfully: $imagePath');
+            return child;
+          }
           return Center(
             child: CircularProgressIndicator(
               value: loadingProgress.expectedTotalBytes != null
@@ -591,10 +604,12 @@ class _ProductCardsViewState extends State<ProductCardsView> {
     }
     
     // Otherwise treat as asset
+    print('Loading asset image: $imagePath');
     return Image.asset(
       imagePath,
       fit: BoxFit.cover,
       errorBuilder: (context, error, stackTrace) {
+        print('Error loading asset $imagePath: $error');
         return _buildImagePlaceholder();
       },
     );

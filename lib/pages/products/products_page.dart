@@ -41,6 +41,17 @@ class _ProductsPageState extends State<ProductsPage> {
 
       final fetchedProducts = await _productsService.getStoreProducts(storeId);
 
+      // Debug logging
+      print('Loaded ${fetchedProducts.length} products');
+      for (var product in fetchedProducts) {
+        print(
+          'Product ${product.id}: ${product.name} - ${product.images.length} images',
+        );
+        if (product.images.isNotEmpty) {
+          print('  First image: ${product.images.first}');
+        }
+      }
+
       setState(() {
         products = fetchedProducts;
         isLoading = false;
@@ -452,15 +463,21 @@ class _ProductsPageState extends State<ProductsPage> {
       }).toList();
     }
 
-    return products
+    final legacyProducts = products
         .where((product) {
           final matchesSearch = product.name.toLowerCase().contains(
             searchQuery.toLowerCase(),
           );
           return matchesSearch;
         })
-        .map((product) => product.toLegacyFormat())
+        .map((product) {
+          final legacy = product.toLegacyFormat();
+          print('Legacy format for ${product.id}: image = ${legacy['image']}');
+          return legacy;
+        })
         .toList();
+
+    return legacyProducts;
   }
 
   @override
