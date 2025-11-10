@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'components/orders_header.dart';
 import 'components/statistics_cards.dart';
 import 'components/filter_tabs.dart';
@@ -6,6 +7,9 @@ import 'components/orders_list.dart';
 import '../../services/orders_service.dart';
 import '../../services/auth_service.dart';
 import '../../services/logger_service.dart';
+import 'orders_bloc.dart';
+import 'orders_event.dart';
+import 'orders_state.dart';
 
 class OrdersPage extends StatefulWidget {
   const OrdersPage({super.key});
@@ -15,7 +19,6 @@ class OrdersPage extends StatefulWidget {
 }
 
 class _OrdersPageState extends State<OrdersPage> {
-  int selectedFilterIndex = 0;
   final List<String> filterTabs = [
     'All',
     'Unfulfilled',
@@ -66,6 +69,12 @@ class _OrdersPageState extends State<OrdersPage> {
         
         if (_storeId != null) {
           LoggerService.info('Store ID loaded: $_storeId');
+          // Load orders using BLoC
+          if (mounted) {
+            context.read<OrdersBloc>().add(
+              LoadOrders(storeId: int.parse(_storeId!)),
+            );
+          }
           await _fetchAnalytics();
         } else {
           LoggerService.warning('Store ID not found in user data');
@@ -125,7 +134,14 @@ class _OrdersPageState extends State<OrdersPage> {
   @override
   Widget build(BuildContext context) {
     return RefreshIndicator(
-      onRefresh: _fetchAnalytics,
+      onRefresh: () async {
+        await _fetchAnalytics();
+        if (_storeId != null && mounted) {
+          context.read<OrdersBloc>().add(
+            RefreshOrders(storeId: int.parse(_storeId!)),
+          );
+        }
+      },
       child: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         physics: const AlwaysScrollableScrollPhysics(),
@@ -147,22 +163,112 @@ class _OrdersPageState extends State<OrdersPage> {
             ),
             const SizedBox(height: 24),
 
-            // Filter Tabs
-            FilterTabs(
-              selectedFilterIndex: selectedFilterIndex,
-              filterTabs: filterTabs,
-              onFilterChanged: (index) {
-                setState(() {
-                  selectedFilterIndex = index;
-                });
+            // Filter Tabs with BLoC
+            BlocBuilder<OrdersBloc, OrdersState>(
+              builder: (context, state) {
+                int selectedIndex = 0;
+                if (state is OrdersLoaded && state.statusFilter != null) {
+                  selectedIndex = filterTabs.indexWhere(
+                    (tab) => tab.toLowerCase() == state.statusFilter!.toLowerCase(),
+                  );
+                  if (selectedIndex == -1) selectedIndex = 0;
+                }
+
+                return FilterTabs(
+                  selectedFilterIndex: selectedIndex,
+                  filterTabs: filterTabs,
+                  onFilterChanged: (index) {
+                    final filter = index == 0 ? null : filterTabs[index];
+                    context.read<OrdersBloc>().add(
+                      FilterOrdersByStatus(status: filter),
+                    );
+                  },
+                );
               },
             ),
             const SizedBox(height: 16),
 
-            // Orders List
-            OrdersList(
-              selectedFilter: filterTabs[selectedFilterIndex],
-              selectedDateRange: selectedDateRange,
+            // Orders List with BLoC
+            BlocConsumer<OrdersBloc, OrdersState>(
+              listener: (context, state) {
+                if (state is OrderStatusUpdated) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Order status updated successfully!'),
+                      backgroundColor: Colors.green,
+                    ),
+                  );
+                } else if (state is OrderCreated) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Order created successfully!'),
+                      backgroundColor: Colors.green,
+                    ),
+                  );
+                } else if (state is OrderDeleted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Order deleted successfully!'),
+                      backgroundColor: Colors.green,
+                    ),
+                  );
+                }
+              },
+              builder: (context, state) {
+                if (state is OrdersLoading) {
+                  return const Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(32.0),
+                      child: CircularProgressIndicator(),
+                    ),
+                  );
+                }
+
+                if (state is OrdersError) {
+                  return Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(32.0),
+                      child: Column(
+                        children: [
+                          Icon(
+                            Icons.error_outline,
+                            size: 64,
+                            color: Theme.of(context).colorScheme.error,
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            'Failed to load orders',
+                            style: Theme.of(context).textTheme.headlineSmall,
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            state.message,
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: 16),
+                          ElevatedButton(
+                            onPressed: () {
+                              if (_storeId != null) {
+                                context.read<OrdersBloc>().add(
+                                  LoadOrders(storeId: int.parse(_storeId!)),
+                                );
+                              }
+                            },
+                            child: const Text('Retry'),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                }
+
+                // Use the existing OrdersList component
+                // It will need to be updated to accept orders from BLoC
+                return OrdersList(
+                  selectedFilter: filterTabs[0], // Will be handled by BLoC
+                  selectedDateRange: selectedDateRange,
+                );
+              },
             ),
           ],
         ),

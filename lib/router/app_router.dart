@@ -5,6 +5,7 @@ import '../main.dart';
 import '../pages/home/home_page.dart';
 import '../pages/orders/orders_page.dart';
 import '../pages/orders/order_details_page.dart';
+import '../pages/orders/orders_bloc.dart';
 import '../pages/products/products_page.dart';
 import '../pages/products/products_bloc.dart';
 import '../pages/finances/finances_page.dart';
@@ -17,6 +18,7 @@ import '../pages/auth/register_page.dart';
 import '../services/onboarding_service.dart';
 import '../services/auth_service.dart';
 import '../services/products_service.dart';
+import '../services/orders_service.dart';
 
 class AppRouter {
   static final GoRouter router = GoRouter(
@@ -91,8 +93,16 @@ class AppRouter {
           GoRoute(
             path: '/orders',
             name: 'orders',
-            pageBuilder: (context, state) =>
-                NoTransitionPage(key: state.pageKey, child: const OrdersPage()),
+            pageBuilder: (context, state) => NoTransitionPage(
+              key: state.pageKey,
+              child: BlocProvider(
+                create: (context) => OrdersBloc(
+                  ordersService: OrdersService(authService: AuthService()),
+                  authService: AuthService(),
+                ),
+                child: const OrdersPage(),
+              ),
+            ),
             routes: [
               GoRoute(
                 path: 'details/:orderId',
