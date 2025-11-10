@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import '../constants/api_constants.dart';
+import '../models/order.dart';
 import 'auth_service.dart';
 import 'logger_service.dart';
 
@@ -8,8 +9,8 @@ class OrdersService {
   final AuthService _authService;
 
   OrdersService({AuthService? authService})
-      : _authService = authService ?? AuthService(),
-        _dio = Dio() {
+    : _authService = authService ?? AuthService(),
+      _dio = Dio() {
     _dio.options.baseUrl = ApiConstants.baseUrl;
     _dio.options.connectTimeout = ApiConstants.connectTimeout;
     _dio.options.receiveTimeout = ApiConstants.receiveTimeout;
@@ -20,7 +21,7 @@ class OrdersService {
       InterceptorsWrapper(
         onRequest: (options, handler) async {
           LoggerService.debug('API Request: ${options.method} ${options.uri}');
-          
+
           final token = await _authService.getToken();
           if (token != null) {
             options.headers[ApiConstants.authorizationHeader] = 'Bearer $token';
@@ -43,7 +44,7 @@ class OrdersService {
   }
 
   /// Fetch orders analytics summary for a store
-  /// 
+  ///
   /// Parameters:
   /// - [storeId]: The ID of the store
   /// - [period]: The time period for analytics (default: 'week')
@@ -79,7 +80,7 @@ class OrdersService {
       }
     } on DioException catch (e) {
       LoggerService.apiError('getOrdersAnalyticsSummary', e);
-      
+
       if (e.response != null) {
         LoggerService.error(
           'Orders analytics API error - Status: ${e.response!.statusCode}',
@@ -97,23 +98,31 @@ class OrdersService {
   }
 
   /// Fetch orders list for a store
-  /// 
+  ///
   /// Parameters:
   /// - [storeId]: The ID of the store
   /// - [status]: Filter by order status (optional)
+  /// - [skip]: Number of records to skip for pagination (default: 0)
+  /// - [limit]: Maximum number of records to return (default: 100)
   /// - [startDate]: Start date for filtering (optional)
   /// - [endDate]: End date for filtering (optional)
-  Future<List<Map<String, dynamic>>> getOrders({
+  Future<List<Order>> getOrders({
     required String storeId,
     String? status,
+    int skip = 0,
+    int limit = 100,
     DateTime? startDate,
     DateTime? endDate,
   }) async {
     try {
-      LoggerService.info('Fetching orders for store: $storeId');
+      LoggerService.info(
+        'Fetching orders for store: $storeId (skip: $skip, limit: $limit)',
+      );
 
       final queryParams = <String, dynamic>{
         'store_id': storeId,
+        'skip': skip,
+        'limit': limit,
       };
 
       if (status != null) {
@@ -127,20 +136,32 @@ class OrdersService {
       }
 
       final response = await _dio.get(
-        ApiConstants.ordersEndpoint,
+        '${ApiConstants.ordersEndpoint}/',
         queryParameters: queryParams,
       );
 
       if (response.statusCode == 200) {
-        LoggerService.info('Orders fetched successfully');
         final data = response.data;
-        
+
+        List<dynamic> ordersList;
         if (data is List) {
-          return data.cast<Map<String, dynamic>>();
+          ordersList = data;
         } else if (data is Map && data['orders'] != null) {
-          return (data['orders'] as List).cast<Map<String, dynamic>>();
+          ordersList = data['orders'] as List;
+        } else {
+          ordersList = [];
         }
-        return [];
+
+        final orders = ordersList
+            .map(
+              (orderJson) => Order.fromJson(orderJson as Map<String, dynamic>),
+            )
+            .toList();
+
+        LoggerService.info(
+          'Orders fetched successfully: ${orders.length} orders',
+        );
+        return orders;
       } else {
         LoggerService.warning('Failed to fetch orders: ${response.statusCode}');
         return [];
@@ -207,10 +228,7 @@ class OrdersService {
         orderId,
       );
 
-      final response = await _dio.patch(
-        endpoint,
-        data: {'status': status},
-      );
+      final response = await _dio.patch(endpoint, data: {'status': status});
 
       if (response.statusCode == 200) {
         LoggerService.info('Order status updated successfully');
@@ -234,4 +252,3 @@ class OrdersService {
     }
   }
 }
-

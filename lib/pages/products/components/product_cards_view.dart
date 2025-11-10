@@ -303,7 +303,7 @@ class _ProductCardsViewState extends State<ProductCardsView> {
               child: () {
                 print('Grid card - Product ${product['id']}: image = ${product['image']}');
                 return product['image'] != null && product['image'].toString().isNotEmpty
-                    ? _buildProductImage(product['image'])
+                  ? _buildProductImage(product['image'])
                     : _buildImagePlaceholder();
               }(),
             ),
@@ -457,7 +457,7 @@ class _ProductCardsViewState extends State<ProductCardsView> {
             child: () {
               print('List card - Product ${product['id']}: image = ${product['image']}');
               return product['image'] != null && product['image'].toString().isNotEmpty
-                  ? _buildProductImage(product['image'])
+                ? _buildProductImage(product['image'])
                   : _buildImagePlaceholder();
             }(),
           ),

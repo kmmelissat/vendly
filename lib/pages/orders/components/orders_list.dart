@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
+import '../../../models/order.dart';
+import '../../../services/orders_service.dart';
+import '../../../services/auth_service.dart';
+import '../../../services/logger_service.dart';
 
-class OrdersList extends StatelessWidget {
+class OrdersList extends StatefulWidget {
   final String selectedFilter;
   final DateTimeRange? selectedDateRange;
 
@@ -12,74 +17,103 @@ class OrdersList extends StatelessWidget {
   });
 
   @override
+  State<OrdersList> createState() => _OrdersListState();
+}
+
+class _OrdersListState extends State<OrdersList> {
+  late OrdersService _ordersService;
+  late AuthService _authService;
+  List<Order> _orders = [];
+  bool _isLoading = true;
+  String? _storeId;
+
+  @override
+  void initState() {
+    super.initState();
+    _authService = AuthService();
+    _ordersService = OrdersService(authService: _authService);
+    _loadOrders();
+  }
+
+  @override
+  void didUpdateWidget(OrdersList oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Reload orders if filter or date range changes
+    if (oldWidget.selectedFilter != widget.selectedFilter ||
+        oldWidget.selectedDateRange != widget.selectedDateRange) {
+      _loadOrders();
+    }
+  }
+
+  Future<void> _loadOrders() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      // Get user data to extract store ID
+      final userData = await _authService.getUserData();
+      if (userData != null && userData['store'] != null) {
+        final store = userData['store'] as Map<String, dynamic>;
+        _storeId = store['id']?.toString();
+
+        if (_storeId != null) {
+          LoggerService.info('Loading orders for store: $_storeId');
+
+          // Map filter to status
+          String? status;
+          if (widget.selectedFilter != 'All') {
+            status = _mapFilterToStatus(widget.selectedFilter);
+          }
+
+          final orders = await _ordersService.getOrders(
+            storeId: _storeId!,
+            status: status,
+            startDate: widget.selectedDateRange?.start,
+            endDate: widget.selectedDateRange?.end,
+          );
+
+          if (mounted) {
+            setState(() {
+              _orders = orders;
+              _isLoading = false;
+            });
+          }
+        }
+      }
+    } catch (e, stackTrace) {
+      LoggerService.error(
+        'Error loading orders',
+        error: e,
+        stackTrace: stackTrace,
+      );
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  String? _mapFilterToStatus(String filter) {
+    switch (filter) {
+      case 'Unfulfilled':
+        return 'pending';
+      case 'Open':
+        return 'confirmed';
+      default:
+        return null;
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final sampleOrders = [
-      {
-        'id': '#1002',
-        'date': '11 Feb, 2024',
-        'customer': 'Carlos Hernández',
-        'payment': 'Pending',
-        'total': '\$20.00',
-        'items': '2 items',
-        'fulfillment': 'Unfulfilled',
-        'status': 'Open', // Order status for filtering
-        'paymentColor': const Color(0xFFFF9800),
-        'fulfillmentColor': const Color(0xFFF44336),
-      },
-      {
-        'id': '#1004',
-        'date': '13 Feb, 2024',
-        'customer': 'María Elena Rodríguez',
-        'payment': 'Success',
-        'total': '\$22.00',
-        'items': '3 items',
-        'fulfillment': 'Fulfilled',
-        'status': 'Closed', // Order status for filtering
-        'paymentColor': const Color(0xFF4CAF50),
-        'fulfillmentColor': const Color(0xFF4CAF50),
-      },
-      {
-        'id': '#1007',
-        'date': '15 Feb, 2024',
-        'customer': 'Ana Sofía Martínez',
-        'payment': 'Pending',
-        'total': '\$25.00',
-        'items': '1 items',
-        'fulfillment': 'Unfulfilled',
-        'status': 'Open', // Order status for filtering
-        'paymentColor': const Color(0xFFFF9800),
-        'fulfillmentColor': const Color(0xFFF44336),
-      },
-      {
-        'id': '#1009',
-        'date': '17 Feb, 2024',
-        'customer': 'Roberto Castillo',
-        'payment': 'Success',
-        'total': '\$27.00',
-        'items': '5 items',
-        'fulfillment': 'Fulfilled',
-        'status': 'Closed', // Order status for filtering
-        'paymentColor': const Color(0xFF4CAF50),
-        'fulfillmentColor': const Color(0xFF4CAF50),
-      },
-      {
-        'id': '#1011',
-        'date': '19 Feb, 2024',
-        'customer': 'Gabriela Campos',
-        'payment': 'Pending',
-        'total': '\$32.00',
-        'items': '4 items',
-        'fulfillment': 'Unfulfilled',
-        'status': 'Open', // Order status for filtering
-        'paymentColor': const Color(0xFFFF9800),
-        'fulfillmentColor': const Color(0xFFF44336),
-      },
-    ];
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
 
-    // Filter orders based on selected filter
-    final filteredOrders = _filterOrders(sampleOrders);
-
-    if (filteredOrders.isEmpty) {
+    // Show empty state if no orders
+    if (_orders.isEmpty) {
       return Center(
         child: Column(
           children: [
@@ -109,33 +143,39 @@ class OrdersList extends StatelessWidget {
     }
 
     return Column(
-      children: filteredOrders
+      children: _orders
           .map((order) => _buildOrderCard(context, order))
           .toList(),
     );
   }
 
-  List<Map<String, dynamic>> _filterOrders(List<Map<String, dynamic>> orders) {
-    return orders.where((order) {
-      // Apply filter based on selected filter
-      switch (selectedFilter) {
-        case 'All':
-          return true;
-        case 'Unfulfilled':
-          return order['fulfillment'] == 'Unfulfilled';
-        case 'Unpaid':
-          return order['payment'] == 'Pending';
-        case 'Open':
-          return order['status'] == 'Open';
-        case 'Closed':
-          return order['status'] == 'Closed';
-        default:
-          return true;
-      }
-    }).toList();
+  Color _getStatusColor(String status) {
+    switch (status.toLowerCase()) {
+      case 'pending':
+        return const Color(0xFFFF9800);
+      case 'confirmed':
+      case 'processing':
+        return const Color(0xFF2196F3);
+      case 'shipped':
+        return const Color(0xFF9C27B0);
+      case 'delivered':
+        return const Color(0xFF4CAF50);
+      case 'cancelled':
+      case 'canceled':
+        return const Color(0xFFF44336);
+      default:
+        return const Color(0xFF757575);
+    }
   }
 
-  Widget _buildOrderCard(BuildContext context, Map<String, dynamic> order) {
+  String _formatStatus(String status) {
+    return status[0].toUpperCase() + status.substring(1);
+  }
+
+  Widget _buildOrderCard(BuildContext context, Order order) {
+    final dateFormat = DateFormat('dd MMM, yyyy');
+    final statusColor = _getStatusColor(order.status);
+
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       elevation: 1,
@@ -143,9 +183,7 @@ class OrdersList extends StatelessWidget {
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
         onTap: () {
-          // Navigate to order details - encode the order ID to handle special characters
-          final encodedOrderId = Uri.encodeComponent(order['id']);
-          context.go('/orders/details/$encodedOrderId');
+          context.go('/orders/details/${order.id}');
         },
         child: Padding(
           padding: const EdgeInsets.all(16.0),
@@ -155,14 +193,14 @@ class OrdersList extends StatelessWidget {
               Row(
                 children: [
                   Text(
-                    order['id'],
+                    order.orderNumber,
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w600,
                     ),
                   ),
                   const Spacer(),
                   Text(
-                    order['date'],
+                    dateFormat.format(order.createdAt),
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: Theme.of(
                         context,
@@ -191,7 +229,7 @@ class OrdersList extends StatelessWidget {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          order['customer'],
+                          'Customer #${order.customerId}',
                           style: Theme.of(context).textTheme.bodyMedium
                               ?.copyWith(fontWeight: FontWeight.w500),
                         ),
@@ -211,7 +249,7 @@ class OrdersList extends StatelessWidget {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        order['total'],
+                        '\$${order.totalAmount.toStringAsFixed(2)}',
                         style: Theme.of(context).textTheme.titleMedium
                             ?.copyWith(
                               fontWeight: FontWeight.bold,
@@ -227,42 +265,20 @@ class OrdersList extends StatelessWidget {
               // Status Row
               Row(
                 children: [
-                  // Payment Status
+                  // Order Status
                   Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 8,
                       vertical: 4,
                     ),
                     decoration: BoxDecoration(
-                      color: (order['paymentColor'] as Color).withOpacity(0.1),
+                      color: statusColor.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
-                      order['payment'],
+                      _formatStatus(order.status),
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: order['paymentColor'] as Color,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-
-                  // Fulfillment Status
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: (order['fulfillmentColor'] as Color).withOpacity(
-                        0.1,
-                      ),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      order['fulfillment'],
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: order['fulfillmentColor'] as Color,
+                        color: statusColor,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -271,7 +287,7 @@ class OrdersList extends StatelessWidget {
 
                   // Items count
                   Text(
-                    order['items'],
+                    '${order.products.length} item${order.products.length != 1 ? 's' : ''}',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: Theme.of(
                         context,
