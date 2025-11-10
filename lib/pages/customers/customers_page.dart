@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'components/customers_header.dart';
 import 'components/customers_list.dart';
-import '../../services/customers_service.dart';
 import '../../services/auth_service.dart';
-import '../../models/customer.dart';
-import '../../utils/auth_error_handler.dart';
+import 'customers_bloc.dart';
+import 'customers_event.dart';
+import 'customers_state.dart';
 
 class CustomersPage extends StatefulWidget {
   const CustomersPage({super.key});
@@ -14,15 +15,6 @@ class CustomersPage extends StatefulWidget {
 }
 
 class _CustomersPageState extends State<CustomersPage> {
-  final CustomersService _customersService = CustomersService();
-  
-  String searchQuery = '';
-  String selectedFilter = 'All';
-  String sortBy = 'Recent';
-  
-  bool _isLoading = true;
-  String? _errorMessage;
-  List<Customer> _customers = [];
   int? _storeId;
 
   final List<String> filterOptions = ['All', 'VIP', 'Regular', 'New'];
@@ -41,11 +33,6 @@ class _CustomersPageState extends State<CustomersPage> {
   }
 
   Future<void> _loadCustomers() async {
-    setState(() {
-      _isLoading = true;
-      _errorMessage = null;
-    });
-
     try {
       // Get store ID from user data
       final authService = AuthService();
@@ -60,91 +47,14 @@ class _CustomersPageState extends State<CustomersPage> {
         }
       }
 
-      if (_storeId == null) {
-        setState(() {
-          _errorMessage = 'Store ID not found. Please login again.';
-          _isLoading = false;
-        });
-        return;
-      }
-
-      final customers = await _customersService.getCustomers(
-        storeId: _storeId!,
-        includeOrderStats: true,
-      );
-
-      setState(() {
-        _customers = customers;
-        _isLoading = false;
-      });
-    } catch (e) {
-      if (AuthErrorHandler.isAuthError(e)) {
-        if (mounted) {
-          await AuthErrorHandler.handleAuthError(
-            context,
-            errorMessage: AuthErrorHandler.getAuthErrorMessage(e),
-          );
-        }
-      } else {
-        setState(() {
-          _errorMessage = e.toString();
-          _isLoading = false;
-        });
-      }
-    }
-  }
-
-  List<Map<String, dynamic>> get filteredCustomers {
-    // Convert Customer objects to legacy format
-    List<Map<String, dynamic>> filtered = _customers
-        .map((customer) => customer.toLegacyFormat())
-        .toList();
-
-    // Apply search filter
-    if (searchQuery.isNotEmpty) {
-      filtered = filtered.where((customer) {
-        return customer['name'].toLowerCase().contains(
-              searchQuery.toLowerCase(),
-            ) ||
-            customer['email'].toLowerCase().contains(
-              searchQuery.toLowerCase(),
-            ) ||
-            customer['phone'].contains(searchQuery);
-      }).toList();
-    }
-
-    // Apply status filter
-    if (selectedFilter != 'All') {
-      filtered = filtered.where((customer) {
-        return customer['status'] == selectedFilter;
-      }).toList();
-    }
-
-    // Apply sorting
-    switch (sortBy) {
-      case 'Name A-Z':
-        filtered.sort((a, b) => a['name'].compareTo(b['name']));
-        break;
-      case 'Name Z-A':
-        filtered.sort((a, b) => b['name'].compareTo(a['name']));
-        break;
-      case 'Orders High-Low':
-        filtered.sort((a, b) => b['totalOrders'].compareTo(a['totalOrders']));
-        break;
-      case 'Orders Low-High':
-        filtered.sort((a, b) => a['totalOrders'].compareTo(b['totalOrders']));
-        break;
-      case 'Recent':
-      default:
-        filtered.sort(
-          (a, b) => DateTime.parse(
-            b['lastOrder'],
-          ).compareTo(DateTime.parse(a['lastOrder'])),
+      if (_storeId != null && mounted) {
+        context.read<CustomersBloc>().add(
+          LoadCustomers(storeId: _storeId!),
         );
-        break;
+      }
+    } catch (e) {
+      // Error will be handled by BLoC
     }
-
-    return filtered;
   }
 
   @override
@@ -153,79 +63,124 @@ class _CustomersPageState extends State<CustomersPage> {
       body: Column(
         children: [
           // Simple Header
-          Container(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'Customers',
-                  style: Theme.of(
-                    context,
-                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+          BlocBuilder<CustomersBloc, CustomersState>(
+            builder: (context, state) {
+              final isLoading = state is CustomersLoading;
+              return Container(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Customers',
+                      style: Theme.of(context)
+                          .textTheme
+                          .titleLarge
+                          ?.copyWith(fontWeight: FontWeight.bold),
+                    ),
+                    if (!isLoading)
+                      IconButton(
+                        icon: const Icon(Icons.refresh),
+                        onPressed: () {
+                          if (_storeId != null) {
+                            context.read<CustomersBloc>().add(
+                              RefreshCustomers(storeId: _storeId!),
+                            );
+                          }
+                        },
+                        tooltip: 'Refresh',
+                      ),
+                  ],
                 ),
-                if (!_isLoading)
-                  IconButton(
-                    icon: const Icon(Icons.refresh),
-                    onPressed: _loadCustomers,
-                    tooltip: 'Refresh',
-                ),
-              ],
-            ),
+              );
+            },
           ),
 
           // Content
           Expanded(
-            child: _isLoading
-                ? const Center(child: CircularProgressIndicator())
-                : _errorMessage != null
-                    ? _buildErrorState()
-                    : SingleChildScrollView(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 8,
+            child: BlocConsumer<CustomersBloc, CustomersState>(
+              listener: (context, state) {
+                if (state is CustomerUpdated) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Customer updated successfully!'),
+                      backgroundColor: Colors.green,
+                    ),
+                  );
+                } else if (state is CustomerDeleted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Customer deleted successfully!'),
+                      backgroundColor: Colors.green,
+                    ),
+                  );
+                }
+              },
+              builder: (context, state) {
+                if (state is CustomersLoading) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+
+                if (state is CustomersError) {
+                  return _buildErrorState(state.message);
+                }
+
+                if (state is CustomersLoaded) {
+                  final filteredCustomers = state.filteredCustomers
+                      .map((customer) => customer.toLegacyFormat())
+                      .toList();
+
+                  return SingleChildScrollView(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
+                    child: Column(
+                      children: [
+                        // Search and Filters
+                        CustomersHeader(
+                          searchQuery: state.searchQuery,
+                          selectedFilter: state.statusFilter ?? 'All',
+                          sortBy: state.sortBy,
+                          filterOptions: filterOptions,
+                          sortOptions: sortOptions,
+                          onSearchChanged: (query) {
+                            context.read<CustomersBloc>().add(
+                              SearchCustomers(query: query),
+                            );
+                          },
+                          onFilterChanged: (filter) {
+                            context.read<CustomersBloc>().add(
+                              FilterCustomersByStatus(
+                                status: filter == 'All' ? null : filter,
+                              ),
+                            );
+                          },
+                          onSortChanged: (sort) {
+                            context.read<CustomersBloc>().add(
+                              SortCustomers(sortBy: sort),
+                            );
+                          },
                         ),
-              child: Column(
-                children: [
-                  // Search and Filters
-                  CustomersHeader(
-                    searchQuery: searchQuery,
-                    selectedFilter: selectedFilter,
-                    sortBy: sortBy,
-                    filterOptions: filterOptions,
-                    sortOptions: sortOptions,
-                    onSearchChanged: (query) {
-                      setState(() {
-                        searchQuery = query;
-                      });
-                    },
-                    onFilterChanged: (filter) {
-                      setState(() {
-                        selectedFilter = filter;
-                      });
-                    },
-                    onSortChanged: (sort) {
-                      setState(() {
-                        sortBy = sort;
-                      });
-                    },
-                  ),
 
-                  const SizedBox(height: 24),
+                        const SizedBox(height: 24),
 
-                  // Customers List
-                  CustomersList(
-                    customers: filteredCustomers,
-                    onCustomerTap: (customer) {
-                      _showCustomerDetails(context, customer);
-                    },
-                  ),
+                        // Customers List
+                        CustomersList(
+                          customers: filteredCustomers,
+                          onCustomerTap: (customer) {
+                            _showCustomerDetails(context, customer);
+                          },
+                        ),
 
-                            const SizedBox(
-                              height: 100,
-                            ), // Bottom padding for navigation
-                ],
-              ),
+                        const SizedBox(height: 100),
+                      ],
+                    ),
+                  );
+                }
+
+                return const Center(child: Text('No customers found'));
+              },
             ),
           ),
         ],
@@ -233,7 +188,7 @@ class _CustomersPageState extends State<CustomersPage> {
     );
   }
 
-  Widget _buildErrorState() {
+  Widget _buildErrorState(String errorMessage) {
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(24),
@@ -254,7 +209,7 @@ class _CustomersPageState extends State<CustomersPage> {
             ),
             const SizedBox(height: 8),
             Text(
-              _errorMessage ?? 'An unknown error occurred',
+              errorMessage,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: Theme.of(context)
                         .colorScheme
@@ -265,7 +220,13 @@ class _CustomersPageState extends State<CustomersPage> {
             ),
             const SizedBox(height: 24),
             ElevatedButton.icon(
-              onPressed: _loadCustomers,
+              onPressed: () {
+                if (_storeId != null) {
+                  context.read<CustomersBloc>().add(
+                    LoadCustomers(storeId: _storeId!),
+                  );
+                }
+              },
               icon: const Icon(Icons.refresh),
               label: const Text('Retry'),
               style: ElevatedButton.styleFrom(

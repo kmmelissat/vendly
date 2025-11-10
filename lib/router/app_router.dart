@@ -10,6 +10,7 @@ import '../pages/products/products_page.dart';
 import '../pages/products/products_bloc.dart';
 import '../pages/finances/finances_page.dart';
 import '../pages/customers/customers_page.dart';
+import '../pages/customers/customers_bloc.dart';
 import '../pages/analytics/analytics_page.dart';
 import '../pages/profile/profile_page.dart';
 import '../pages/onboarding/onboarding_page.dart';
@@ -19,6 +20,7 @@ import '../services/onboarding_service.dart';
 import '../services/auth_service.dart';
 import '../services/products_service.dart';
 import '../services/orders_service.dart';
+import '../services/customers_service.dart';
 
 class AppRouter {
   static final GoRouter router = GoRouter(
@@ -142,7 +144,13 @@ class AppRouter {
             name: 'customers',
             pageBuilder: (context, state) => NoTransitionPage(
               key: state.pageKey,
-              child: const CustomersPage(),
+              child: BlocProvider(
+                create: (context) => CustomersBloc(
+                  customersService: CustomersService(),
+                  authService: AuthService(),
+                ),
+                child: const CustomersPage(),
+              ),
             ),
           ),
           GoRoute(
