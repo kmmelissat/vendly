@@ -5,6 +5,7 @@ import 'components/product_details_modal.dart';
 import 'components/add_product_form.dart';
 import '../../models/product.dart';
 import '../../services/products_service.dart';
+import '../../services/auth_service.dart';
 import '../../utils/auth_error_handler.dart';
 
 class ProductsPage extends StatefulWidget {
@@ -22,25 +23,80 @@ class _ProductsPageState extends State<ProductsPage> {
   bool isLoading = true;
   String? errorMessage;
   final ProductsService _productsService = ProductsService();
+  final AuthService _authService = AuthService();
 
-  // For demo purposes, using store ID 7 as mentioned in the API example
-  late final int storeId;
+  int? storeId;
 
   @override
   void initState() {
     super.initState();
-    storeId = widget.storeId ?? 7; // Default to store ID 7 from the API example
-    _loadProducts();
+    _initializeStoreId();
+  }
+
+  Future<void> _initializeStoreId() async {
+    try {
+      if (widget.storeId != null) {
+        storeId = widget.storeId;
+      } else {
+        // Get store ID from user data
+        final userData = await _authService.getUserData();
+        if (userData != null) {
+          final store = userData['store'] as Map<String, dynamic>?;
+          final storeIdValue = store?['id'];
+
+          // Convert to int if it's a string
+          if (storeIdValue != null) {
+            if (storeIdValue is int) {
+              storeId = storeIdValue;
+            } else if (storeIdValue is String) {
+              storeId = int.tryParse(storeIdValue);
+            }
+          }
+
+          print('Store data: $store');
+          print('Store ID: $storeId (type: ${storeId.runtimeType})');
+        } else {
+          print('User data is null');
+        }
+      }
+
+      if (storeId != null) {
+        await _loadProducts();
+      } else {
+        if (mounted) {
+          setState(() {
+            errorMessage = 'Store ID not found. Please log in again.';
+            isLoading = false;
+          });
+        }
+      }
+    } catch (e) {
+      print('Error initializing store ID: $e');
+      if (mounted) {
+        setState(() {
+          errorMessage = 'Error loading store data: $e';
+          isLoading = false;
+        });
+      }
+    }
   }
 
   Future<void> _loadProducts() async {
+    if (storeId == null) {
+      setState(() {
+        errorMessage = 'Store ID not found';
+        isLoading = false;
+      });
+      return;
+    }
+
     try {
       setState(() {
         isLoading = true;
         errorMessage = null;
       });
 
-      final fetchedProducts = await _productsService.getStoreProducts(storeId);
+      final fetchedProducts = await _productsService.getStoreProducts(storeId!);
 
       // Debug logging
       print('Loaded ${fetchedProducts.length} products');

@@ -93,6 +93,8 @@ class ImageUploadService {
           for (var item in response.data) {
             if (item is String) {
               uploadedUrls.add(item);
+            } else if (item is Map && item['image_url'] != null) {
+              uploadedUrls.add(item['image_url'] as String);
             } else if (item is Map && item['url'] != null) {
               uploadedUrls.add(item['url'] as String);
             } else if (item is Map && item['image'] != null) {
@@ -104,6 +106,8 @@ class ImageUploadService {
           for (var item in images) {
             if (item is String) {
               uploadedUrls.add(item);
+            } else if (item is Map && item['image_url'] != null) {
+              uploadedUrls.add(item['image_url'] as String);
             } else if (item is Map && item['url'] != null) {
               uploadedUrls.add(item['url'] as String);
             } else if (item is Map && item['image'] != null) {
@@ -150,6 +154,8 @@ class ImageUploadService {
           for (var item in response.data) {
             if (item is String) {
               imageUrls.add(item);
+            } else if (item is Map && item['image_url'] != null) {
+              imageUrls.add(item['image_url'] as String);
             } else if (item is Map && item['url'] != null) {
               imageUrls.add(item['url'] as String);
             } else if (item is Map && item['image'] != null) {
@@ -161,6 +167,8 @@ class ImageUploadService {
           for (var item in images) {
             if (item is String) {
               imageUrls.add(item);
+            } else if (item is Map && item['image_url'] != null) {
+              imageUrls.add(item['image_url'] as String);
             } else if (item is Map && item['url'] != null) {
               imageUrls.add(item['url'] as String);
             } else if (item is Map && item['image'] != null) {

@@ -48,18 +48,18 @@ class _AddProductFormState extends State<AddProductForm> {
   String? selectedImagePath;
   List<String> uploadedImages = [];
   List<XFile> selectedImageFiles = []; // Store XFile objects for upload
-  
+
   final ProductsService _productsService = ProductsService();
   final AuthService _authService = AuthService();
   final ImageUploadService _imageUploadService = ImageUploadService();
   bool _isSaving = false;
   bool _isLoadingCategories = true;
-  
+
   // API-related fields
   int? storeId; // Will be fetched from user session
   int? selectedCategoryId; // Selected category ID from API
   List<Category> apiCategories = [];
-  
+
   // Fallback categories if API fails
   final List<String> fallbackCategories = [
     'Labubu',
@@ -68,7 +68,6 @@ class _AddProductFormState extends State<AddProductForm> {
     'Ternuritos',
     'Others',
   ];
-
 
   @override
   void initState() {
@@ -80,13 +79,39 @@ class _AddProductFormState extends State<AddProductForm> {
     // Fetch store ID from user session
     try {
       final userData = await _authService.getUserData();
-      if (userData != null && userData['store_id'] != null) {
-        storeId = userData['store_id'] as int;
-      } else {
-        storeId = 7; // Fallback to default
+      if (userData != null) {
+        final store = userData['store'] as Map<String, dynamic>?;
+        final storeIdValue = store?['id'];
+
+        // Convert to int if it's a string
+        if (storeIdValue != null) {
+          if (storeIdValue is int) {
+            storeId = storeIdValue;
+          } else if (storeIdValue is String) {
+            storeId = int.tryParse(storeIdValue);
+          }
+        }
+      }
+
+      if (storeId == null) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Store ID not found. Please log in again.'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
       }
     } catch (e) {
-      storeId = 7; // Fallback on error
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error loading store data: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
 
     // Fetch categories from API
@@ -121,7 +146,8 @@ class _AddProductFormState extends State<AddProductForm> {
     _brandController.text = product['brand'] ?? '';
     _skuController.text = product['sku'] ?? '';
     _priceController.text = (product['price'] ?? 0.0).toString();
-    _productionCostController.text = (product['production_cost'] ?? 0.0).toString();
+    _productionCostController.text = (product['production_cost'] ?? 0.0)
+        .toString();
     _discountPriceController.text = product['discount_price']?.toString() ?? '';
     _descriptionController.text = product['description'] ?? '';
     _detailedDescriptionController.text = product['detailedDescription'] ?? '';
@@ -131,7 +157,7 @@ class _AddProductFormState extends State<AddProductForm> {
     _materialController.text = product['material'] ?? '';
     _ageRangeController.text = product['ageRange'] ?? '';
     _originController.text = product['origin'] ?? '';
-    
+
     // Handle features and tags
     if (product['features'] is List) {
       _featuresController.text = (product['features'] as List).join(', ');
@@ -139,22 +165,25 @@ class _AddProductFormState extends State<AddProductForm> {
     if (product['tags'] is List) {
       _tagsController.text = (product['tags'] as List).join(', ');
     }
-    
+
     // Set other properties
     final productCategory = product['category'] ?? 'Labubu';
-    selectedCategory = fallbackCategories.contains(productCategory) ? productCategory : 'Others';
+    selectedCategory = fallbackCategories.contains(productCategory)
+        ? productCategory
+        : 'Others';
     inStock = product['inStock'] ?? true;
     selectedImagePath = product['image'];
-    
+
     // Set category ID if available
     if (product['category_id'] != null) {
       selectedCategoryId = product['category_id'] as int;
     }
-    
+
     // Handle images - convert single image to list if needed
     if (product['images'] is List && (product['images'] as List).isNotEmpty) {
       uploadedImages = List<String>.from(product['images']);
-    } else if (product['image'] != null && (product['image'] as String).isNotEmpty) {
+    } else if (product['image'] != null &&
+        (product['image'] as String).isNotEmpty) {
       uploadedImages = [product['image']];
     }
   }
@@ -271,7 +300,6 @@ class _AddProductFormState extends State<AddProductForm> {
       ),
     );
   }
-
 
   Widget _buildBasicInformation() {
     return Column(
@@ -424,82 +452,92 @@ class _AddProductFormState extends State<AddProductForm> {
                 ),
               )
             : apiCategories.isNotEmpty
-                ? DropdownButtonFormField<int>(
-                    value: selectedCategoryId,
-                    decoration: InputDecoration(
-                      labelText: 'Category *',
-                      prefixIcon: const Icon(Icons.category_outlined),
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(color: Color(0xFF5329C8), width: 2),
-                      ),
-                      filled: true,
-                      fillColor: Theme.of(context).colorScheme.surface,
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 16,
-                      ),
-                    ),
-                    items: apiCategories.map((category) {
-                      return DropdownMenuItem<int>(
-                        value: category.id,
-                        child: Text(category.name),
-                      );
-                    }).toList(),
-                    onChanged: (value) {
-                      setState(() {
-                        selectedCategoryId = value;
-                      });
-                    },
-                    validator: (value) {
-                      if (value == null) {
-                        return 'Select a category';
-                      }
-                      return null;
-                    },
-                  )
-                : DropdownButtonFormField<String>(
-                    value: selectedCategory,
-                    decoration: InputDecoration(
-                      labelText: 'Category * (Fallback)',
-                      prefixIcon: const Icon(Icons.category_outlined),
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(color: Color(0xFF5329C8), width: 2),
-                      ),
-                      filled: true,
-                      fillColor: Theme.of(context).colorScheme.surface,
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 16,
-                      ),
-                    ),
-                    items: fallbackCategories.map((category) {
-                      return DropdownMenuItem(
-                        value: category,
-                        child: Row(
-                          children: [
-                            _getCategoryIcon(category),
-                            const SizedBox(width: 8),
-                            Text(category),
-                          ],
-                        ),
-                      );
-                    }).toList(),
-                    onChanged: (value) {
-                      setState(() {
-                        selectedCategory = value!;
-                      });
-                    },
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Select a category';
-                      }
-                      return null;
-                    },
+            ? DropdownButtonFormField<int>(
+                value: selectedCategoryId,
+                decoration: InputDecoration(
+                  labelText: 'Category *',
+                  prefixIcon: const Icon(Icons.category_outlined),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
                   ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(
+                      color: Color(0xFF5329C8),
+                      width: 2,
+                    ),
+                  ),
+                  filled: true,
+                  fillColor: Theme.of(context).colorScheme.surface,
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 16,
+                  ),
+                ),
+                items: apiCategories.map((category) {
+                  return DropdownMenuItem<int>(
+                    value: category.id,
+                    child: Text(category.name),
+                  );
+                }).toList(),
+                onChanged: (value) {
+                  setState(() {
+                    selectedCategoryId = value;
+                  });
+                },
+                validator: (value) {
+                  if (value == null) {
+                    return 'Select a category';
+                  }
+                  return null;
+                },
+              )
+            : DropdownButtonFormField<String>(
+                value: selectedCategory,
+                decoration: InputDecoration(
+                  labelText: 'Category * (Fallback)',
+                  prefixIcon: const Icon(Icons.category_outlined),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(
+                      color: Color(0xFF5329C8),
+                      width: 2,
+                    ),
+                  ),
+                  filled: true,
+                  fillColor: Theme.of(context).colorScheme.surface,
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 16,
+                  ),
+                ),
+                items: fallbackCategories.map((category) {
+                  return DropdownMenuItem(
+                    value: category,
+                    child: Row(
+                      children: [
+                        _getCategoryIcon(category),
+                        const SizedBox(width: 8),
+                        Text(category),
+                      ],
+                    ),
+                  );
+                }).toList(),
+                onChanged: (value) {
+                  setState(() {
+                    selectedCategory = value!;
+                  });
+                },
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Select a category';
+                  }
+                  return null;
+                },
+              ),
       ],
     );
   }
@@ -572,7 +610,9 @@ class _AddProductFormState extends State<AddProductForm> {
                 decoration: InputDecoration(
                   labelText: 'Production Cost',
                   hintText: '15.00',
-                  prefixIcon: const Icon(Icons.precision_manufacturing_outlined),
+                  prefixIcon: const Icon(
+                    Icons.precision_manufacturing_outlined,
+                  ),
                   prefixText: '\$',
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -620,15 +660,10 @@ class _AddProductFormState extends State<AddProductForm> {
             prefixIcon: const Icon(Icons.local_offer_outlined),
             prefixText: '\$',
             helperText: 'Leave empty if no discount',
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(
-                color: Color(0xFF5329C8),
-                width: 2,
-              ),
+              borderSide: const BorderSide(color: Color(0xFF5329C8), width: 2),
             ),
             filled: true,
             fillColor: Theme.of(context).colorScheme.surface,
@@ -637,9 +672,7 @@ class _AddProductFormState extends State<AddProductForm> {
               vertical: 16,
             ),
           ),
-          keyboardType: const TextInputType.numberWithOptions(
-            decimal: true,
-          ),
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
           validator: (value) {
             if (value != null && value.isNotEmpty) {
               final discountPrice = double.tryParse(value);
@@ -1094,6 +1127,11 @@ class _AddProductFormState extends State<AddProductForm> {
           throw Exception('Not authenticated. Please log in.');
         }
 
+        // Validate store ID
+        if (storeId == null) {
+          throw Exception('Store ID not found. Please log in again.');
+        }
+
         // Prepare product data for API
         final productData = {
           'name': _nameController.text,
@@ -1113,23 +1151,26 @@ class _AddProductFormState extends State<AddProductForm> {
               ? int.tryParse(_stockController.text) ?? 0
               : 0,
           'is_active': inStock,
-          'store_id': storeId ?? 7, // Use fetched store ID or fallback
-          'category_id': selectedCategoryId ?? 1, // Use selected category ID or fallback
+          'store_id': storeId!, // Use authenticated user's store ID
+          'category_id':
+              selectedCategoryId ?? 1, // Use selected category ID or fallback
           'tag_ids': [], // Could add tag selection
         };
 
         int? productId;
-        
+
         if (widget.isEditing) {
           // Update existing product
           productId = int.tryParse(widget.existingProduct!['id'].toString());
           if (productId != null) {
             await _productsService.updateProduct(productId, productData, token);
-            
+
             if (mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: Text('${_nameController.text} updated successfully!'),
+                  content: Text(
+                    '${_nameController.text} updated successfully!',
+                  ),
                   backgroundColor: Colors.green,
                 ),
               );
@@ -1137,11 +1178,14 @@ class _AddProductFormState extends State<AddProductForm> {
           }
         } else {
           // Create new product
-          final createdProduct = await _productsService.createProduct(productData, token);
-          
+          final createdProduct = await _productsService.createProduct(
+            productData,
+            token,
+          );
+
           // Get product ID from created product
           productId = createdProduct.id;
-          
+
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
@@ -1162,18 +1206,20 @@ class _AddProductFormState extends State<AddProductForm> {
               ),
             );
           }
-          
+
           try {
             final imageUrls = await _imageUploadService.uploadProductImages(
               productId: productId,
               imageFiles: selectedImageFiles,
               authToken: token,
             );
-            
+
             if (mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: Text('${imageUrls.length} images uploaded successfully!'),
+                  content: Text(
+                    '${imageUrls.length} images uploaded successfully!',
+                  ),
                   backgroundColor: Colors.green,
                 ),
               );
@@ -1182,7 +1228,9 @@ class _AddProductFormState extends State<AddProductForm> {
             if (mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: Text('Product saved but image upload failed: ${e.toString()}'),
+                  content: Text(
+                    'Product saved but image upload failed: ${e.toString()}',
+                  ),
                   backgroundColor: Colors.orange,
                   duration: const Duration(seconds: 4),
                 ),
