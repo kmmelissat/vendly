@@ -7,6 +7,7 @@ import 'logger_service.dart';
 
 class AuthService {
   final Dio _dio;
+  bool _isRefreshing = false;
 
   AuthService() : _dio = Dio() {
     _dio.options.baseUrl = ApiConstants.baseUrl;
@@ -44,13 +45,55 @@ class AuthService {
           }
           handler.next(response);
         },
-        onError: (error, handler) {
+        onError: (error, handler) async {
           LoggerService.apiError(error.requestOptions.uri.toString(), error);
 
+          // Check for authentication errors
           if (error.response?.statusCode == 401) {
-            LoggerService.warning('Token expired, logging out user');
-            logout();
+            final responseData = error.response?.data;
+
+            // Check if it's a token expiration error
+            if (responseData is Map &&
+                (responseData['error_type'] == 'authentication_error' ||
+                    responseData['detail']?.toString().toLowerCase().contains(
+                          'token',
+                        ) ==
+                        true)) {
+              LoggerService.warning('Token expired, attempting to refresh');
+
+              // Try to refresh the token
+              if (!_isRefreshing) {
+                _isRefreshing = true;
+                final refreshed = await refreshToken();
+                _isRefreshing = false;
+
+                if (refreshed) {
+                  // Retry the original request with new token
+                  try {
+                    final token = await getToken();
+                    error.requestOptions.headers[ApiConstants
+                            .authorizationHeader] =
+                        'Bearer $token';
+
+                    final response = await _dio.fetch(error.requestOptions);
+                    return handler.resolve(response);
+                  } catch (e) {
+                    LoggerService.error(
+                      'Failed to retry request after token refresh',
+                      error: e,
+                    );
+                  }
+                } else {
+                  // Refresh failed, logout user
+                  LoggerService.warning(
+                    'Token refresh failed, logging out user',
+                  );
+                  await logout();
+                }
+              }
+            }
           }
+
           handler.next(error);
         },
       ),

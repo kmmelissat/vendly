@@ -5,6 +5,7 @@ import 'components/product_details_modal.dart';
 import 'components/add_product_form.dart';
 import '../../models/product.dart';
 import '../../services/products_service.dart';
+import '../../utils/auth_error_handler.dart';
 
 class ProductsPage extends StatefulWidget {
   final int? storeId;
@@ -57,10 +58,20 @@ class _ProductsPageState extends State<ProductsPage> {
         isLoading = false;
       });
     } catch (e) {
-      setState(() {
-        errorMessage = e.toString();
-        isLoading = false;
-      });
+      // Check if it's an authentication error
+      if (AuthErrorHandler.isAuthError(e)) {
+        if (mounted) {
+          await AuthErrorHandler.handleAuthError(
+            context,
+            errorMessage: AuthErrorHandler.getAuthErrorMessage(e),
+          );
+        }
+      } else {
+        setState(() {
+          errorMessage = e.toString();
+          isLoading = false;
+        });
+      }
     }
   }
 
