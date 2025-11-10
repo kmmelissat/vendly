@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import '../main.dart';
 import '../pages/home/home_page.dart';
 import '../pages/orders/orders_page.dart';
 import '../pages/orders/order_details_page.dart';
 import '../pages/products/products_page.dart';
+import '../pages/products/products_bloc.dart';
 import '../pages/finances/finances_page.dart';
 import '../pages/customers/customers_page.dart';
 import '../pages/analytics/analytics_page.dart';
@@ -14,6 +16,7 @@ import '../pages/auth/login_page.dart';
 import '../pages/auth/register_page.dart';
 import '../services/onboarding_service.dart';
 import '../services/auth_service.dart';
+import '../services/products_service.dart';
 
 class AppRouter {
   static final GoRouter router = GoRouter(
@@ -68,7 +71,7 @@ class AppRouter {
           if (!isOnboardingCompleted) {
             return '/onboarding';
           }
-          
+
           final authService = AuthService();
           final isAuthenticated = await authService.isAuthenticated();
           return isAuthenticated ? '/home' : '/login';
@@ -107,7 +110,13 @@ class AppRouter {
             name: 'products',
             pageBuilder: (context, state) => NoTransitionPage(
               key: state.pageKey,
-              child: const ProductsPage(),
+              child: BlocProvider(
+                create: (context) => ProductsBloc(
+                  productsService: ProductsService(),
+                  authService: AuthService(),
+                ),
+                child: const ProductsPage(),
+              ),
             ),
           ),
           GoRoute(

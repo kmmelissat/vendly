@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'components/products_header.dart';
 import 'components/product_cards_view.dart';
 import 'components/product_details_modal.dart';
 import 'components/add_product_form.dart';
 import '../../models/product.dart';
-import '../../services/products_service.dart';
 import '../../services/auth_service.dart';
-import '../../utils/auth_error_handler.dart';
+import 'products_bloc.dart';
+import 'products_event.dart';
+import 'products_state.dart';
 
 class ProductsPage extends StatefulWidget {
   final int? storeId;
@@ -18,13 +20,7 @@ class ProductsPage extends StatefulWidget {
 }
 
 class _ProductsPageState extends State<ProductsPage> {
-  String searchQuery = '';
-  List<Product> products = [];
-  bool isLoading = true;
-  String? errorMessage;
-  final ProductsService _productsService = ProductsService();
   final AuthService _authService = AuthService();
-
   int? storeId;
 
   @override
@@ -61,77 +57,16 @@ class _ProductsPageState extends State<ProductsPage> {
       }
 
       if (storeId != null) {
-        await _loadProducts();
-      } else {
-        if (mounted) {
-          setState(() {
-            errorMessage = 'Store ID not found. Please log in again.';
-            isLoading = false;
-          });
-        }
+        // Load products using BLoC
+        context.read<ProductsBloc>().add(LoadProducts(storeId: storeId!));
       }
     } catch (e) {
       print('Error initializing store ID: $e');
-      if (mounted) {
-        setState(() {
-          errorMessage = 'Error loading store data: $e';
-          isLoading = false;
-        });
-      }
     }
   }
 
-  Future<void> _loadProducts() async {
-    if (storeId == null) {
-      setState(() {
-        errorMessage = 'Store ID not found';
-        isLoading = false;
-      });
-      return;
-    }
-
-    try {
-      setState(() {
-        isLoading = true;
-        errorMessage = null;
-      });
-
-      final fetchedProducts = await _productsService.getStoreProducts(storeId!);
-
-      // Debug logging
-      print('Loaded ${fetchedProducts.length} products');
-      for (var product in fetchedProducts) {
-        print(
-          'Product ${product.id}: ${product.name} - ${product.images.length} images',
-        );
-        if (product.images.isNotEmpty) {
-          print('  First image: ${product.images.first}');
-        }
-      }
-
-      setState(() {
-        products = fetchedProducts;
-        isLoading = false;
-      });
-    } catch (e) {
-      // Check if it's an authentication error
-      if (AuthErrorHandler.isAuthError(e)) {
-        if (mounted) {
-          await AuthErrorHandler.handleAuthError(
-            context,
-            errorMessage: AuthErrorHandler.getAuthErrorMessage(e),
-          );
-        }
-      } else {
-        setState(() {
-          errorMessage = e.toString();
-          isLoading = false;
-        });
-      }
-    }
-  }
-
-  // Fallback hardcoded products for development/testing
+  // Fallback hardcoded products for development/testing (kept for reference)
+  // ignore: unused_field
   final List<Map<String, dynamic>> _fallbackProducts = [
     {
       'id': 'labubu1',
@@ -519,30 +454,15 @@ class _ProductsPageState extends State<ProductsPage> {
     },
   ];
 
-  List<Map<String, dynamic>> get filteredProducts {
-    if (products.isEmpty && errorMessage != null) {
-      // Return fallback products if API fails
-      return _fallbackProducts.where((product) {
-        final matchesSearch = product['name'].toString().toLowerCase().contains(
-          searchQuery.toLowerCase(),
-        );
-        return matchesSearch;
-      }).toList();
-    }
-
-    final legacyProducts = products
-        .where((product) {
-          final matchesSearch = product.name.toLowerCase().contains(
-            searchQuery.toLowerCase(),
-          );
-          return matchesSearch;
-        })
-        .map((product) {
-          final legacy = product.toLegacyFormat();
-          print('Legacy format for ${product.id}: image = ${legacy['image']}');
-          return legacy;
-        })
-        .toList();
+  List<Map<String, dynamic>> _getFilteredProducts(
+    List<Product> products,
+    String searchQuery,
+  ) {
+    final legacyProducts = products.map((product) {
+      final legacy = product.toLegacyFormat();
+      print('Legacy format for ${product.id}: image = ${legacy['image']}');
+      return legacy;
+    }).toList();
 
     return legacyProducts;
   }
@@ -552,14 +472,22 @@ class _ProductsPageState extends State<ProductsPage> {
     return Scaffold(
       body: Column(
         children: [
-          ProductsHeader(
-            searchQuery: searchQuery,
-            onSearchChanged: (value) {
-              setState(() {
-                searchQuery = value;
-              });
+          BlocBuilder<ProductsBloc, ProductsState>(
+            builder: (context, state) {
+              String currentQuery = '';
+              if (state is ProductsLoaded) {
+                currentQuery = state.searchQuery;
+              }
+              return ProductsHeader(
+                searchQuery: currentQuery,
+                onSearchChanged: (value) {
+                  context.read<ProductsBloc>().add(
+                    SearchProducts(query: value),
+                  );
+                },
+                onAddProduct: () => _showAddProductForm(context),
+              );
             },
-            onAddProduct: () => _showAddProductForm(context),
           ),
           Expanded(child: _buildBody()),
         ],
@@ -568,71 +496,143 @@ class _ProductsPageState extends State<ProductsPage> {
   }
 
   Widget _buildBody() {
-    if (isLoading) {
-      return const Center(child: CircularProgressIndicator());
-    }
+    return BlocConsumer<ProductsBloc, ProductsState>(
+      listener: (context, state) {
+        if (state is ProductAdded) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Product added successfully!'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        } else if (state is ProductUpdated) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Product updated successfully!'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        } else if (state is ProductDeleted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Product deleted successfully!'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
+      },
+      builder: (context, state) {
+        if (state is ProductsLoading) {
+          return const Center(child: CircularProgressIndicator());
+        }
 
-    if (errorMessage != null && products.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.error_outline,
-              size: 64,
-              color: Theme.of(context).colorScheme.error,
+        if (state is ProductsError) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.error_outline,
+                  size: 64,
+                  color: Theme.of(context).colorScheme.error,
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'Failed to load products',
+                  style: Theme.of(context).textTheme.headlineSmall,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  state.message,
+                  style: Theme.of(context).textTheme.bodyMedium,
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 16),
+                ElevatedButton(
+                  onPressed: () {
+                    if (storeId != null) {
+                      context.read<ProductsBloc>().add(
+                        LoadProducts(storeId: storeId!),
+                      );
+                    }
+                  },
+                  child: const Text('Retry'),
+                ),
+                if (state.products != null && state.products!.isNotEmpty)
+                  const SizedBox(height: 8),
+                if (state.products != null && state.products!.isNotEmpty)
+                  TextButton(
+                    onPressed: () {
+                      // Show products even with error
+                    },
+                    child: const Text('Use Demo Data'),
+                  ),
+              ],
             ),
-            const SizedBox(height: 16),
-            Text(
-              'Failed to load products',
-              style: Theme.of(context).textTheme.headlineSmall,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              errorMessage!,
-              style: Theme.of(context).textTheme.bodyMedium,
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: _loadProducts,
-              child: const Text('Retry'),
-            ),
-            const SizedBox(height: 8),
-            TextButton(
-              onPressed: () {
-                setState(() {
-                  errorMessage = null;
-                  products = [];
-                });
-              },
-              child: const Text('Use Demo Data'),
-            ),
-          ],
-        ),
-      );
-    }
+          );
+        }
 
-    return RefreshIndicator(
-      onRefresh: _loadProducts,
-      child: ProductCardsView(
-        products: filteredProducts,
-        onProductTap: (product) => _showProductDetails(context, product),
-        onStockToggle: (product, inStock) {
-          // Find the actual Product object and update it
-          final productId = int.tryParse(product['id'].toString());
-          if (productId != null) {
-            final productIndex = products.indexWhere((p) => p.id == productId);
-            if (productIndex != -1) {
-              // In a real app, you would call an API to update the stock status
-              // For now, we'll just update the local state
-              setState(() {
-                product['inStock'] = inStock;
-              });
-            }
+        if (state is ProductsLoaded) {
+          final filteredProducts = _getFilteredProducts(
+            state.filteredProducts,
+            state.searchQuery,
+          );
+
+          if (filteredProducts.isEmpty) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.inventory_2_outlined,
+                    size: 64,
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withOpacity(0.3),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'No products found',
+                    style: Theme.of(context).textTheme.headlineSmall,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    state.searchQuery.isNotEmpty
+                        ? 'Try a different search term'
+                        : 'Add your first product to get started',
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  ),
+                ],
+              ),
+            );
           }
-        },
-      ),
+
+          return RefreshIndicator(
+            onRefresh: () async {
+              if (storeId != null) {
+                context.read<ProductsBloc>().add(
+                  RefreshProducts(storeId: storeId!),
+                );
+              }
+            },
+            child: ProductCardsView(
+              products: filteredProducts,
+              onProductTap: (product) => _showProductDetails(context, product),
+              onStockToggle: (product, inStock) {
+                final productId = int.tryParse(product['id'].toString());
+                if (productId != null) {
+                  context.read<ProductsBloc>().add(
+                    ToggleProductStock(productId: productId, inStock: inStock),
+                  );
+                }
+              },
+            ),
+          );
+        }
+
+        // Initial or unknown state
+        return const Center(child: Text('Loading products...'));
+      },
     );
   }
 
@@ -645,7 +645,7 @@ class _ProductsPageState extends State<ProductsPage> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) {
+      builder: (modalContext) {
         return DraggableScrollableSheet(
           initialChildSize: 0.9,
           minChildSize: 0.5,
@@ -659,12 +659,19 @@ class _ProductsPageState extends State<ProductsPage> {
                   top: Radius.circular(20),
                 ),
               ),
-              child: AddProductForm(
-                scrollController: controller,
-                onProductAdded: (newProduct) {
-                  // Refresh the products list after adding a new product
-                  _loadProducts();
-                },
+              child: BlocProvider.value(
+                value: context.read<ProductsBloc>(),
+                child: AddProductForm(
+                  scrollController: controller,
+                  onProductAdded: (newProduct) {
+                    // Refresh handled by BLoC
+                    if (storeId != null) {
+                      context.read<ProductsBloc>().add(
+                        RefreshProducts(storeId: storeId!),
+                      );
+                    }
+                  },
+                ),
               ),
             );
           },
