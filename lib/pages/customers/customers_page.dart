@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'components/customers_header.dart';
-import 'components/customers_stats.dart';
 import 'components/customers_list.dart';
+import '../../services/customers_service.dart';
+import '../../services/auth_service.dart';
+import '../../models/customer.dart';
+import '../../utils/auth_error_handler.dart';
 
 class CustomersPage extends StatefulWidget {
   const CustomersPage({super.key});
@@ -11,9 +14,16 @@ class CustomersPage extends StatefulWidget {
 }
 
 class _CustomersPageState extends State<CustomersPage> {
+  final CustomersService _customersService = CustomersService();
+  
   String searchQuery = '';
   String selectedFilter = 'All';
   String sortBy = 'Recent';
+  
+  bool _isLoading = true;
+  String? _errorMessage;
+  List<Customer> _customers = [];
+  int? _storeId;
 
   final List<String> filterOptions = ['All', 'VIP', 'Regular', 'New'];
   final List<String> sortOptions = [
@@ -24,96 +34,71 @@ class _CustomersPageState extends State<CustomersPage> {
     'Orders Low-High',
   ];
 
-  // Sample customer data
-  final List<Map<String, dynamic>> customers = [
-    {
-      'id': 'CUST-001',
-      'name': 'María González',
-      'email': 'maria.gonzalez@email.com',
-      'phone': '+503 7123-4567',
-      'avatar': 'assets/images/customers/customer1.jpg',
-      'totalOrders': 15,
-      'totalSpent': 450.75,
-      'lastOrder': '2024-01-15',
-      'status': 'VIP',
-      'joinDate': '2023-08-15',
-      'favoriteProducts': ['Labubu Classic Pink', 'Sonny Angel'],
-      'address': 'San Salvador, El Salvador',
-    },
-    {
-      'id': 'CUST-002',
-      'name': 'Carlos Rodríguez',
-      'email': 'carlos.rodriguez@email.com',
-      'phone': '+503 7234-5678',
-      'avatar': 'assets/images/customers/customer2.jpg',
-      'totalOrders': 8,
-      'totalSpent': 280.50,
-      'lastOrder': '2024-01-12',
-      'status': 'Regular',
-      'joinDate': '2023-11-20',
-      'favoriteProducts': ['Gummy Bear Plush', 'Ternuritos'],
-      'address': 'Santa Ana, El Salvador',
-    },
-    {
-      'id': 'CUST-003',
-      'name': 'Ana Martínez',
-      'email': 'ana.martinez@email.com',
-      'phone': '+503 7345-6789',
-      'avatar': 'assets/images/customers/customer3.jpg',
-      'totalOrders': 22,
-      'totalSpent': 675.25,
-      'lastOrder': '2024-01-14',
-      'status': 'VIP',
-      'joinDate': '2023-06-10',
-      'favoriteProducts': ['Labubu Golden Edition', 'Cinnamoroll Plush'],
-      'address': 'San Miguel, El Salvador',
-    },
-    {
-      'id': 'CUST-004',
-      'name': 'Luis Hernández',
-      'email': 'luis.hernandez@email.com',
-      'phone': '+503 7456-7890',
-      'avatar': 'assets/images/customers/customer4.jpg',
-      'totalOrders': 3,
-      'totalSpent': 95.00,
-      'lastOrder': '2024-01-10',
-      'status': 'New',
-      'joinDate': '2024-01-05',
-      'favoriteProducts': ['Ternuritos Classic Pink'],
-      'address': 'La Libertad, El Salvador',
-    },
-    {
-      'id': 'CUST-005',
-      'name': 'Sofia Ramírez',
-      'email': 'sofia.ramirez@email.com',
-      'phone': '+503 7567-8901',
-      'avatar': 'assets/images/customers/customer5.jpg',
-      'totalOrders': 12,
-      'totalSpent': 380.90,
-      'lastOrder': '2024-01-13',
-      'status': 'Regular',
-      'joinDate': '2023-09-25',
-      'favoriteProducts': ['Wild Cutie Plush', 'Mokoko Seed'],
-      'address': 'Sonsonate, El Salvador',
-    },
-    {
-      'id': 'CUST-006',
-      'name': 'Diego Morales',
-      'email': 'diego.morales@email.com',
-      'phone': '+503 7678-9012',
-      'avatar': 'assets/images/customers/customer6.jpg',
-      'totalOrders': 18,
-      'totalSpent': 520.40,
-      'lastOrder': '2024-01-11',
-      'status': 'VIP',
-      'joinDate': '2023-07-18',
-      'favoriteProducts': ['Labubu Classic Pink', 'Kawaii Unicorn'],
-      'address': 'Ahuachapán, El Salvador',
-    },
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _loadCustomers();
+  }
+
+  Future<void> _loadCustomers() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      // Get store ID from user data
+      final authService = AuthService();
+      final userData = await authService.getUserData();
+      
+      if (userData != null && userData['store'] != null) {
+        final store = userData['store'] as Map<String, dynamic>;
+        final storeIdString = store['id']?.toString();
+        
+        if (storeIdString != null) {
+          _storeId = int.tryParse(storeIdString);
+        }
+      }
+
+      if (_storeId == null) {
+        setState(() {
+          _errorMessage = 'Store ID not found. Please login again.';
+          _isLoading = false;
+        });
+        return;
+      }
+
+      final customers = await _customersService.getCustomers(
+        storeId: _storeId!,
+        includeOrderStats: true,
+      );
+
+      setState(() {
+        _customers = customers;
+        _isLoading = false;
+      });
+    } catch (e) {
+      if (AuthErrorHandler.isAuthError(e)) {
+        if (mounted) {
+          await AuthErrorHandler.handleAuthError(
+            context,
+            errorMessage: AuthErrorHandler.getAuthErrorMessage(e),
+          );
+        }
+      } else {
+        setState(() {
+          _errorMessage = e.toString();
+          _isLoading = false;
+        });
+      }
+    }
+  }
 
   List<Map<String, dynamic>> get filteredCustomers {
-    List<Map<String, dynamic>> filtered = customers;
+    // Convert Customer objects to legacy format
+    List<Map<String, dynamic>> filtered = _customers
+        .map((customer) => customer.toLegacyFormat())
+        .toList();
 
     // Apply search filter
     if (searchQuery.isNotEmpty) {
@@ -179,61 +164,119 @@ class _CustomersPageState extends State<CustomersPage> {
                     context,
                   ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
                 ),
+                if (!_isLoading)
+                  IconButton(
+                    icon: const Icon(Icons.refresh),
+                    onPressed: _loadCustomers,
+                    tooltip: 'Refresh',
+                  ),
               ],
             ),
           ),
 
           // Content
           Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              child: Column(
-                children: [
-                  // Customer Statistics
-                  CustomersStats(customers: customers),
+            child: _isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : _errorMessage != null
+                    ? _buildErrorState()
+                    : SingleChildScrollView(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 8,
+                        ),
+                        child: Column(
+                          children: [
+                            // Search and Filters
+                            CustomersHeader(
+                              searchQuery: searchQuery,
+                              selectedFilter: selectedFilter,
+                              sortBy: sortBy,
+                              filterOptions: filterOptions,
+                              sortOptions: sortOptions,
+                              onSearchChanged: (query) {
+                                setState(() {
+                                  searchQuery = query;
+                                });
+                              },
+                              onFilterChanged: (filter) {
+                                setState(() {
+                                  selectedFilter = filter;
+                                });
+                              },
+                              onSortChanged: (sort) {
+                                setState(() {
+                                  sortBy = sort;
+                                });
+                              },
+                            ),
 
-                  const SizedBox(height: 24),
+                            const SizedBox(height: 24),
 
-                  // Search and Filters
-                  CustomersHeader(
-                    searchQuery: searchQuery,
-                    selectedFilter: selectedFilter,
-                    sortBy: sortBy,
-                    filterOptions: filterOptions,
-                    sortOptions: sortOptions,
-                    onSearchChanged: (query) {
-                      setState(() {
-                        searchQuery = query;
-                      });
-                    },
-                    onFilterChanged: (filter) {
-                      setState(() {
-                        selectedFilter = filter;
-                      });
-                    },
-                    onSortChanged: (sort) {
-                      setState(() {
-                        sortBy = sort;
-                      });
-                    },
-                  ),
+                            // Customers List
+                            CustomersList(
+                              customers: filteredCustomers,
+                              onCustomerTap: (customer) {
+                                _showCustomerDetails(context, customer);
+                              },
+                            ),
 
-                  const SizedBox(height: 24),
-
-                  // Customers List
-                  CustomersList(
-                    customers: filteredCustomers,
-                    onCustomerTap: (customer) {
-                      _showCustomerDetails(context, customer);
-                    },
-                  ),
-
-                  const SizedBox(height: 100), // Bottom padding for navigation
-                ],
-              ),
-            ),
+                            const SizedBox(
+                              height: 100,
+                            ), // Bottom padding for navigation
+                          ],
+                        ),
+                      ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildErrorState() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.error_outline,
+              size: 64,
+              color: Theme.of(context).colorScheme.error,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Failed to load customers',
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              _errorMessage ?? 'An unknown error occurred',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: Theme.of(context)
+                        .colorScheme
+                        .onSurface
+                        .withOpacity(0.6),
+                  ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton.icon(
+              onPressed: _loadCustomers,
+              icon: const Icon(Icons.refresh),
+              label: const Text('Retry'),
+              style: ElevatedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 12,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
