@@ -127,6 +127,7 @@ class OrderProduct {
   final int productId;
   final int quantity;
   final double unitPrice;
+  final ProductInfo? product;
 
   OrderProduct({
     required this.id,
@@ -134,6 +135,7 @@ class OrderProduct {
     required this.productId,
     required this.quantity,
     required this.unitPrice,
+    this.product,
   });
 
   factory OrderProduct.fromJson(Map<String, dynamic> json) {
@@ -143,6 +145,9 @@ class OrderProduct {
       productId: json['product_id'] as int,
       quantity: json['quantity'] as int,
       unitPrice: (json['unit_price'] as num).toDouble(),
+      product: json['product'] != null
+          ? ProductInfo.fromJson(json['product'] as Map<String, dynamic>)
+          : null,
     );
   }
 
@@ -153,6 +158,7 @@ class OrderProduct {
       'product_id': productId,
       'quantity': quantity,
       'unit_price': unitPrice,
+      'product': product?.toJson(),
     };
   }
 
@@ -202,5 +208,90 @@ class Customer {
       'user_type': userType,
       'phone': phone,
     };
+  }
+}
+
+class ProductInfo {
+  final int id;
+  final String name;
+  final String shortDescription;
+  final double price;
+  final double? discountPrice;
+  final String? discountEndDate;
+  final int stock;
+  final bool isActive;
+  final int storeId;
+  final int categoryId;
+  final List<ProductImage> images;
+
+  ProductInfo({
+    required this.id,
+    required this.name,
+    required this.shortDescription,
+    required this.price,
+    this.discountPrice,
+    this.discountEndDate,
+    required this.stock,
+    required this.isActive,
+    required this.storeId,
+    required this.categoryId,
+    required this.images,
+  });
+
+  factory ProductInfo.fromJson(Map<String, dynamic> json) {
+    return ProductInfo(
+      id: json['id'] as int,
+      name: json['name'] as String,
+      shortDescription: json['short_description'] as String,
+      price: (json['price'] as num).toDouble(),
+      discountPrice: json['discount_price'] != null
+          ? (json['discount_price'] as num).toDouble()
+          : null,
+      discountEndDate: json['discount_end_date'] as String?,
+      stock: json['stock'] as int,
+      isActive: json['is_active'] as bool,
+      storeId: json['store_id'] as int,
+      categoryId: json['category_id'] as int,
+      images: (json['images'] as List<dynamic>)
+          .map((img) => ProductImage.fromJson(img as Map<String, dynamic>))
+          .toList(),
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'name': name,
+      'short_description': shortDescription,
+      'price': price,
+      'discount_price': discountPrice,
+      'discount_end_date': discountEndDate,
+      'stock': stock,
+      'is_active': isActive,
+      'store_id': storeId,
+      'category_id': categoryId,
+      'images': images.map((img) => img.toJson()).toList(),
+    };
+  }
+
+  String? get imageUrl => images.isNotEmpty ? images.first.imageUrl : null;
+  double get effectivePrice => discountPrice ?? price;
+}
+
+class ProductImage {
+  final int id;
+  final String imageUrl;
+
+  ProductImage({required this.id, required this.imageUrl});
+
+  factory ProductImage.fromJson(Map<String, dynamic> json) {
+    return ProductImage(
+      id: json['id'] as int,
+      imageUrl: json['image_url'] as String,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {'id': id, 'image_url': imageUrl};
   }
 }

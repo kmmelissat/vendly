@@ -338,20 +338,52 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
   }
 
   Widget _buildOrderItem(BuildContext context, OrderProduct product) {
+    final productInfo = product.product;
+    final productName = productInfo?.name ?? 'Product #${product.productId}';
+    final productDescription = productInfo?.shortDescription;
+    final imageUrl = productInfo?.imageUrl;
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Row(
         children: [
+          // Product Image
           Container(
             width: 60,
             height: 60,
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(8),
-              color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+              color: Theme.of(context).colorScheme.surfaceContainerHighest,
             ),
-            child: Icon(
-              Icons.shopping_bag,
-              color: Theme.of(context).colorScheme.primary,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: imageUrl != null
+                  ? Image.network(
+                      imageUrl,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) {
+                        return Icon(
+                          Icons.shopping_bag,
+                          color: Theme.of(context).colorScheme.primary,
+                        );
+                      },
+                      loadingBuilder: (context, child, loadingProgress) {
+                        if (loadingProgress == null) return child;
+                        return Center(
+                          child: CircularProgressIndicator(
+                            value: loadingProgress.expectedTotalBytes != null
+                                ? loadingProgress.cumulativeBytesLoaded /
+                                      loadingProgress.expectedTotalBytes!
+                                : null,
+                            strokeWidth: 2,
+                          ),
+                        );
+                      },
+                    )
+                  : Icon(
+                      Icons.shopping_bag,
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
             ),
           ),
           const SizedBox(width: 12),
@@ -360,23 +392,29 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Product #${product.productId}',
+                  productName,
                   style: Theme.of(
                     context,
                   ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  'Qty: ${product.quantity}',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Theme.of(
-                      context,
-                    ).colorScheme.onSurface.withOpacity(0.6),
+                if (productDescription != null) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    productDescription,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withOpacity(0.6),
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                ),
+                ],
                 const SizedBox(height: 4),
                 Text(
-                  '\$${product.unitPrice.toStringAsFixed(2)} each',
+                  'Qty: ${product.quantity} × \$${product.unitPrice.toStringAsFixed(2)}',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: Theme.of(
                       context,
@@ -386,6 +424,7 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
               ],
             ),
           ),
+          const SizedBox(width: 8),
           Text(
             '\$${product.totalPrice.toStringAsFixed(2)}',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
