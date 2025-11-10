@@ -63,9 +63,7 @@ class AuthErrorHandler {
           children: [
             const Icon(Icons.warning_amber_rounded, color: Colors.white),
             const SizedBox(width: 12),
-            Expanded(
-              child: Text(message),
-            ),
+            Expanded(child: Text(message)),
           ],
         ),
         backgroundColor: Colors.red.shade700,
@@ -110,4 +108,3 @@ class AuthErrorHandler {
     return 'Authentication error. Please log in again.';
   }
 }
-
