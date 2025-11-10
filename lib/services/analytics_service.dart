@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import '../constants/api_constants.dart';
+import '../models/analytics_dashboard.dart';
 import 'auth_service.dart';
 import 'logger_service.dart';
 
@@ -112,5 +113,64 @@ class AnalyticsService {
     }
 
     return getAnalyticsSummary(storeId: storeId, period: period);
+  }
+
+  /// Fetch analytics dashboard data for a store
+  /// [storeId] - The store ID to fetch analytics for
+  /// [period] - The period for analytics (week, month, year)
+  Future<AnalyticsDashboard?> getDashboardAnalytics({
+    required String storeId,
+    String period = 'month',
+  }) async {
+    try {
+      LoggerService.debug(
+        'Fetching dashboard analytics for store $storeId, period: $period',
+      );
+
+      final endpoint = ApiConstants.replacePathParameter(
+        ApiConstants.analyticsDashboardEndpoint,
+        'storeId',
+        storeId,
+      );
+
+      final response = await _dio.get(
+        endpoint,
+        queryParameters: {'period': period},
+      );
+
+      if (response.statusCode == 200) {
+        final data = response.data as Map<String, dynamic>;
+        LoggerService.info('Dashboard analytics fetched successfully');
+        return AnalyticsDashboard.fromJson(data);
+      } else {
+        LoggerService.warning(
+          'Failed to fetch dashboard analytics: ${response.statusCode}',
+        );
+        return null;
+      }
+    } on DioException catch (e) {
+      LoggerService.apiError('Dashboard Analytics API', e);
+      return null;
+    } catch (e, stackTrace) {
+      LoggerService.error(
+        'Unexpected error fetching dashboard analytics',
+        error: e,
+        stackTrace: stackTrace,
+      );
+      return null;
+    }
+  }
+
+  /// Fetch dashboard analytics for the current user's store
+  Future<AnalyticsDashboard?> getCurrentStoreDashboard({
+    String period = 'month',
+  }) async {
+    final storeId = await _getCurrentStoreId();
+    if (storeId == null) {
+      LoggerService.warning('No store ID found for current user');
+      return null;
+    }
+
+    return getDashboardAnalytics(storeId: storeId, period: period);
   }
 }

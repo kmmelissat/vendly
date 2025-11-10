@@ -59,6 +59,7 @@ class ApiConstants {
   // Analytics Endpoints
   static const String analyticsEndpoint = '/analytics';
   static const String analyticsSummaryEndpoint = '/orders/analytics/summary/{storeId}';
+  static const String analyticsDashboardEndpoint = '/orders/analytics/dashboard/{storeId}';
   static const String salesReportEndpoint = '/analytics/sales';
   static const String revenueReportEndpoint = '/analytics/revenue';
   

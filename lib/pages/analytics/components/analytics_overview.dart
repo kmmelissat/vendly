@@ -1,17 +1,22 @@
 import 'package:flutter/material.dart';
+import '../../../models/analytics_dashboard.dart';
 
 class AnalyticsOverview extends StatelessWidget {
-  final double totalRevenue;
-  final int totalOrders;
-  final double averageOrderValue;
-  final double conversionRate;
+  final RevenueData revenue;
+  final OrdersData orders;
+  final AverageOrderValueData averageOrderValue;
+  final ConversionData conversion;
+  final IncomeData income;
+  final ItemsSoldData itemsSold;
 
   const AnalyticsOverview({
     super.key,
-    required this.totalRevenue,
-    required this.totalOrders,
+    required this.revenue,
+    required this.orders,
     required this.averageOrderValue,
-    required this.conversionRate,
+    required this.conversion,
+    required this.income,
+    required this.itemsSold,
   });
 
   @override
@@ -37,34 +42,50 @@ class AnalyticsOverview extends StatelessWidget {
             _buildMetricCard(
               context,
               'Total Revenue',
-              '\$${totalRevenue.toStringAsFixed(2)}',
+              '\$${revenue.totalRevenue.toStringAsFixed(2)}',
               Icons.attach_money,
               Colors.green,
-              '+15.2% vs last period',
+              'Profit: ${revenue.profitMarginPercent.toStringAsFixed(1)}%',
             ),
             _buildMetricCard(
               context,
               'Total Orders',
-              totalOrders.toString(),
+              orders.totalOrders.toString(),
               Icons.shopping_cart,
               Colors.blue,
-              '+8.7% vs last period',
+              '${orders.statusBreakdown.length} statuses',
             ),
             _buildMetricCard(
               context,
               'Avg Order Value',
-              '\$${averageOrderValue.toStringAsFixed(2)}',
+              '\$${averageOrderValue.averageOrderValue.toStringAsFixed(2)}',
               Icons.trending_up,
               Colors.orange,
-              '+6.1% vs last period',
+              '${averageOrderValue.totalOrders} orders',
             ),
             _buildMetricCard(
               context,
               'Conversion Rate',
-              '${conversionRate.toStringAsFixed(1)}%',
+              '${conversion.conversionRatePercent.toStringAsFixed(1)}%',
               Icons.analytics,
               Colors.purple,
-              '+0.8% vs last period',
+              '${conversion.convertedOrders}/${conversion.totalOrders} converted',
+            ),
+            _buildMetricCard(
+              context,
+              'Income',
+              '\$${income.totalIncome.toStringAsFixed(2)}',
+              Icons.account_balance_wallet,
+              Colors.teal,
+              income.currency,
+            ),
+            _buildMetricCard(
+              context,
+              'Items Sold',
+              itemsSold.totalItemsSold.toString(),
+              Icons.inventory_2,
+              Colors.indigo,
+              '${itemsSold.topProducts.length} top products',
             ),
           ],
         ),
@@ -78,7 +99,7 @@ class AnalyticsOverview extends StatelessWidget {
     String value,
     IconData icon,
     Color color,
-    String change,
+    String subtitle,
   ) {
     return Container(
       padding: const EdgeInsets.all(12),
@@ -99,20 +120,14 @@ class AnalyticsOverview extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: color.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(icon, color: color, size: 20),
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
               ),
-              Icon(Icons.trending_up, color: Colors.green, size: 16),
-            ],
-          ),
+              child: Icon(icon, color: color, size: 20),
+            ),
           const Spacer(),
           Flexible(
             child: Text(
@@ -139,9 +154,9 @@ class AnalyticsOverview extends StatelessWidget {
           const SizedBox(height: 2),
           Flexible(
             child: Text(
-              change,
+              subtitle,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: Colors.green,
+                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
                 fontSize: 10,
               ),
               maxLines: 1,
