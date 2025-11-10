@@ -223,12 +223,12 @@ class OrdersService {
       LoggerService.info('Updating order $orderId status to: $status');
 
       final endpoint = ApiConstants.replacePathParameter(
-        ApiConstants.updateOrderStatusEndpoint,
+        ApiConstants.orderDetailsEndpoint,
         'id',
         orderId,
       );
 
-      final response = await _dio.patch(endpoint, data: {'status': status});
+      final response = await _dio.put(endpoint, data: {'status': status});
 
       if (response.statusCode == 200) {
         LoggerService.info('Order status updated successfully');

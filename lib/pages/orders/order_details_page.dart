@@ -21,6 +21,7 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
   late AuthService _authService;
   Order? _order;
   bool _isLoading = true;
+  bool _isUpdatingStatus = false;
   String? _errorMessage;
 
   @override
@@ -64,6 +65,84 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
             _isLoading = false;
           });
         }
+      }
+    }
+  }
+
+  Future<void> _markAsFulfilled() async {
+    if (_order == null || _isUpdatingStatus) return;
+
+    // Show confirmation dialog
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Mark as Fulfilled'),
+        content: Text(
+          'Are you sure you want to mark order ${_order!.orderNumber} as delivered?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF4CAF50),
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Confirm'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+
+    setState(() {
+      _isUpdatingStatus = true;
+    });
+
+    try {
+      final success = await _ordersService.updateOrderStatus(
+        orderId: _order!.id.toString(),
+        status: 'delivered',
+      );
+
+      if (mounted) {
+        setState(() {
+          _isUpdatingStatus = false;
+        });
+
+        if (success) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Order marked as fulfilled successfully!'),
+              backgroundColor: Color(0xFF4CAF50),
+            ),
+          );
+          // Reload order details to show updated status
+          _loadOrderDetails();
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Failed to update order status'),
+              backgroundColor: Color(0xFFF44336),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isUpdatingStatus = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: ${e.toString()}'),
+            backgroundColor: const Color(0xFFF44336),
+          ),
+        );
       }
     }
   }
@@ -494,19 +573,32 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
   }
 
   Widget _buildActionButtons(BuildContext context, Order order) {
+    final canFulfill = !order.isDelivered && !order.isCanceled;
+
     return Column(
       children: [
         Row(
           children: [
             Expanded(
               child: ElevatedButton.icon(
-                onPressed: order.isPending || order.isConfirmed
-                    ? () {
-                        // Mark as fulfilled
-                      }
+                onPressed: canFulfill && !_isUpdatingStatus
+                    ? _markAsFulfilled
                     : null,
-                icon: const Icon(Icons.check_circle),
-                label: const Text('Mark Fulfilled'),
+                icon: _isUpdatingStatus
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            Colors.white,
+                          ),
+                        ),
+                      )
+                    : const Icon(Icons.check_circle),
+                label: Text(
+                  _isUpdatingStatus ? 'Updating...' : 'Mark Fulfilled',
+                ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF4CAF50),
                   foregroundColor: Colors.white,
