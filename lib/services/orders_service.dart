@@ -180,7 +180,7 @@ class OrdersService {
   }
 
   /// Get order details by ID
-  Future<Map<String, dynamic>?> getOrderDetails(String orderId) async {
+  Future<Order?> getOrderDetails(String orderId) async {
     try {
       LoggerService.info('Fetching order details for: $orderId');
 
@@ -194,7 +194,7 @@ class OrdersService {
 
       if (response.statusCode == 200) {
         LoggerService.info('Order details fetched successfully');
-        return response.data as Map<String, dynamic>;
+        return Order.fromJson(response.data as Map<String, dynamic>);
       } else {
         LoggerService.warning(
           'Failed to fetch order details: ${response.statusCode}',

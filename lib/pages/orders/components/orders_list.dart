@@ -229,7 +229,7 @@ class _OrdersListState extends State<OrdersList> {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          'Customer #${order.customerId}',
+                          order.customerName,
                           style: Theme.of(context).textTheme.bodyMedium
                               ?.copyWith(fontWeight: FontWeight.w500),
                         ),

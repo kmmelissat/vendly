@@ -35,6 +35,8 @@ void main() {
       expect(order.id, 9);
       expect(order.orderNumber, "ORD-20251109223604-PCUS");
       expect(order.customerId, 22);
+      expect(order.customer, isNull);
+      expect(order.customerName, "Customer #22");
       expect(order.totalAmount, 40);
       expect(order.status, "pending");
       expect(order.shippingAddress, "redededededededededed");
@@ -47,6 +49,51 @@ void main() {
       expect(order.products.first.unitPrice, 20);
       expect(order.isPending, true);
       expect(order.isDelivered, false);
+    });
+
+    test('should parse order with customer details', () {
+      final json = {
+        "shipping_address": "redededededededededed",
+        "shipping_city": "strededeing",
+        "shipping_postal_code": "323232",
+        "shipping_country": "el salvasdor",
+        "id": 9,
+        "order_number": "ORD-20251109223604-PCUS",
+        "customer_id": 22,
+        "customer": {
+          "id": 22,
+          "username": "tialeidy",
+          "email": "leidy@tia.com",
+          "user_type": "customer",
+          "phone": null,
+        },
+        "total_amount": 40,
+        "status": "pending",
+        "created_at": "2025-11-09T22:36:04.644447",
+        "updated_at": "2025-11-09T22:36:04.644450",
+        "shipped_at": null,
+        "delivered_at": null,
+        "canceled_at": null,
+        "products": [
+          {
+            "product_id": 24,
+            "quantity": 2,
+            "unit_price": 20,
+            "id": 14,
+            "order_id": 9,
+          },
+        ],
+      };
+
+      final order = Order.fromJson(json);
+
+      expect(order.id, 9);
+      expect(order.customer, isNotNull);
+      expect(order.customer!.username, "tialeidy");
+      expect(order.customer!.email, "leidy@tia.com");
+      expect(order.customer!.userType, "customer");
+      expect(order.customerName, "tialeidy");
+      expect(order.isPending, true);
     });
 
     test('should handle nullable date fields', () {

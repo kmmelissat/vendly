@@ -2,6 +2,7 @@ class Order {
   final int id;
   final String orderNumber;
   final int customerId;
+  final Customer? customer;
   final double totalAmount;
   final String status;
   final DateTime createdAt;
@@ -19,6 +20,7 @@ class Order {
     required this.id,
     required this.orderNumber,
     required this.customerId,
+    this.customer,
     required this.totalAmount,
     required this.status,
     required this.createdAt,
@@ -38,6 +40,9 @@ class Order {
       id: json['id'] as int,
       orderNumber: json['order_number'] as String,
       customerId: json['customer_id'] as int,
+      customer: json['customer'] != null
+          ? Customer.fromJson(json['customer'] as Map<String, dynamic>)
+          : null,
       totalAmount: (json['total_amount'] as num).toDouble(),
       status: json['status'] as String,
       createdAt: DateTime.parse(json['created_at'] as String),
@@ -68,6 +73,7 @@ class Order {
       'id': id,
       'order_number': orderNumber,
       'customer_id': customerId,
+      'customer': customer?.toJson(),
       'total_amount': totalAmount,
       'status': status,
       'created_at': createdAt.toIso8601String(),
@@ -88,7 +94,9 @@ class Order {
     return {
       'id': id.toString(),
       'orderNumber': orderNumber,
-      'customer': 'Customer #$customerId',
+      'customer': customer?.username ?? 'Customer #$customerId',
+      'customerEmail': customer?.email,
+      'customerPhone': customer?.phone,
       'date': createdAt.toIso8601String(),
       'total': totalAmount,
       'status': status,
@@ -100,6 +108,9 @@ class Order {
       'products': products.map((p) => p.toLegacyFormat()).toList(),
     };
   }
+
+  // Helper getter for customer display name
+  String get customerName => customer?.username ?? 'Customer #$customerId';
 
   // Status helpers
   bool get isPending => status == 'pending';
@@ -156,4 +167,40 @@ class OrderProduct {
   }
 
   double get totalPrice => unitPrice * quantity;
+}
+
+class Customer {
+  final int id;
+  final String username;
+  final String email;
+  final String userType;
+  final String? phone;
+
+  Customer({
+    required this.id,
+    required this.username,
+    required this.email,
+    required this.userType,
+    this.phone,
+  });
+
+  factory Customer.fromJson(Map<String, dynamic> json) {
+    return Customer(
+      id: json['id'] as int,
+      username: json['username'] as String,
+      email: json['email'] as String,
+      userType: json['user_type'] as String,
+      phone: json['phone'] as String?,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'username': username,
+      'email': email,
+      'user_type': userType,
+      'phone': phone,
+    };
+  }
 }
